@@ -1,0 +1,125 @@
+# Configuração
+.env
+.env.local
+.env.*.local
+
+# Diretórios de trabalho
+temp/
+output/
+
+# Arquivos temporários
+*.tmp
+*_temp_audio.wav
+temp-audio.m4a
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Ambientes virtuais
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Ferramentas de desenvolvimento
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# IDEs e Editores
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+
+# Logs
+*.log
+logs/
+
+# Arquivos de sistema
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Arquivos de mídia grandes
+*.mp4
+*.mkv
+*.avi
+*.mov
+*.flv
+*.wmv
+*.webm
+*.m4v
+*.3gp
+
+# Arquivos de áudio
+*.wav
+*.mp3
+*.m4a
+*.aac
+*.flac
+*.ogg
+*.wma
+
+# Metadados e subtítulos
+*.info.json
+*.vtt
+*.srt
+*.ass
+*.ssa
+
+# Pre-commit
+.pre-commit-config.yaml.bak
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# OS generated files
+.directory
+.fuse_hidden*

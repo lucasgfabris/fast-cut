@@ -1,0 +1,21 @@
+# Canais autorizados do YouTube (separados por vírgula)
+AUTHORIZED_CHANNELS=UC_x5XG1OV2P6uZZ5FSM9Ttw,UCrAav_9B-1za5hFPfq5Vx-w
+
+# Diretório de saída para os vídeos processados
+OUTPUT_DIR=./output
+
+# Diretório temporário para downloads
+TEMP_DIR=./temp
+
+# Configurações de corte
+MIN_CLIP_DURATION=15  # segundos (mínimo para todas as plataformas)
+MAX_CLIP_DURATION=60  # segundos (máximo para YouTube Shorts)
+CLIPS_PER_VIDEO=3     # número máximo de clipes por vídeo
+
+# Configurações de qualidade
+VIDEO_QUALITY=720p
+AUDIO_BITRATE=128k
+
+# Configurações de análise
+ENERGY_THRESHOLD=0.7  # limiar para detecção de momentos de alta energia
+SILENCE_THRESHOLD=-40 # dB para detecção de silêncio
