@@ -1,21 +1,20 @@
-# 🎬 Fast Cut - Sistema de Geração Automática de Cortes
+# Fast Cut - Sistema de Geração Automática de Cortes
 
 Sistema inteligente que baixa vídeos de canais autorizados do YouTube e gera automaticamente cortes otimizados para **YouTube Shorts**, **TikTok** e **Instagram Reels**.
 
-## 📋 Características
+## Características
 
-- ✅ **100% Gratuito** - Não usa APIs pagas
-- 🤖 **Totalmente Automático** - Identifica os melhores momentos para corte
-- 📱 **Multi-plataforma** - Otimiza para YouTube Shorts, TikTok e Instagram
-- 🎯 **Inteligente** - Analisa áudio, vídeo e detecta momentos de alta energia
-- 🔒 **Seguro** - Apenas canais autorizados via variáveis de ambiente
-- ⚡ **Rápido** - Usa FFmpeg para processamento eficiente
-- 🧪 **Qualidade** - Sistema de linting e validação automática
-- 📊 **Progresso Visual** - Barra de progresso com porcentagem em tempo real
-- 🎬 **Alta Qualidade** - Cortes gerados em 1080p
-- 🧹 **Limpeza Automática** - Remove arquivos temporários após processamento
+- **100% Gratuito** - Não usa APIs pagas
+- **Totalmente Automático** - Identifica os melhores momentos para corte
+- **Multi-plataforma** - Otimiza para YouTube Shorts, TikTok, Instagram Reels (e plataformas customizadas)
+- **Inteligente** - Analisa áudio, vídeo e detecta momentos de alta energia
+- **Seguro** - Apenas canais autorizados via variáveis de ambiente
+- **Rápido** - Downloads e processamento paralelo via ThreadPoolExecutor
+- **Cross-platform** - Funciona em Windows, Linux e macOS
+- **Testável** - Arquitetura com DI, Protocols e 31 testes unitários
+- **Extensível** - Plataformas configuráveis via JSON, serviços plugáveis via Protocols
 
-## 🚀 Instalação Rápida
+## Instalação Rápida
 
 ```bash
 # Clone o projeto
@@ -26,14 +25,14 @@ cd fast-cut
 python scripts/setup.py
 
 # Configure os canais no .env
-cp env_example.txt .env
+cp .env.example .env
 # Edite o .env com seus canais autorizados
 
 # Execute um teste
 make run-test
 ```
 
-## 🛠️ Comandos de Desenvolvimento
+## Comandos de Desenvolvimento
 
 ```bash
 # Configuração inicial
@@ -46,6 +45,9 @@ make lint               # Executa linting (flake8)
 make type-check         # Verifica tipos (mypy)
 make check              # Executa todas as verificações
 
+# Testes
+make test               # Executa testes unitários
+
 # Execução
 make run                # Executa o sistema
 make run-test           # Testa o sistema
@@ -53,9 +55,10 @@ make run-channels       # Lista canais configurados
 
 # Limpeza
 make clean              # Remove arquivos temporários
+make clear              # Limpa output/ e temp/
 ```
 
-## ⚙️ Configuração
+## Configuração
 
 ### Arquivo .env
 ```env
@@ -70,79 +73,92 @@ CLIPS_PER_VIDEO=3
 # Configurações de análise
 ENERGY_THRESHOLD=0.7
 SILENCE_THRESHOLD=-40
+
+# Plataformas customizadas (opcional)
+# PLATFORMS_FILE=./platforms.json
 ```
 
-## 📁 Nova Estrutura do Projeto
+### Plataformas Customizadas
+
+Crie um arquivo `platforms.json` para adicionar novas plataformas sem alterar o código:
+
+```json
+{
+    "youtube_shorts": {
+        "resolution": [1080, 1920],
+        "fps": 30,
+        "format": "mp4",
+        "max_duration": 60
+    },
+    "twitter_video": {
+        "resolution": [1280, 720],
+        "fps": 30,
+        "format": "mp4",
+        "max_duration": 140
+    }
+}
+```
+
+## Arquitetura
 
 ```
 fast-cut/
-├── src/fast_cut/           # Código fonte principal
-│   ├── core/              # Módulos principais
-│   │   ├── config.py      # Configurações
-│   │   ├── types.py       # Tipos e estruturas
-│   │   └── system.py      # Sistema principal
-│   ├── services/          # Serviços especializados
-│   │   ├── downloader.py  # Download de vídeos
-│   │   ├── analyzer.py    # Análise de vídeos
-│   │   └── cutter.py      # Corte e otimização
-│   └── utils/             # Utilitários
-│       └── ffmpeg.py      # Utilitários FFmpeg
-├── scripts/               # Scripts de automação
-│   ├── setup.py          # Configuração inicial
-│   └── validate.py       # Validação de código
-├── pyproject.toml         # Configuração do projeto
-├── .pre-commit-config.yaml # Hooks de pre-commit
-└── Makefile              # Comandos de desenvolvimento
+├── main.py                     # Entry point (CLI)
+├── src/fast_cut/
+│   ├── core/                   # Núcleo do sistema
+│   │   ├── config.py           # Config injetável (dataclass + from_env)
+│   │   ├── types.py            # Tipos e estruturas de dados
+│   │   ├── protocols.py        # Interfaces (Protocols) para serviços
+│   │   ├── system.py           # Facade + factory create_system()
+│   │   ├── pipeline.py         # PipelineOrchestrator (download→análise→corte)
+│   │   ├── file_manager.py     # Gerenciamento de arquivos e diretórios
+│   │   └── reporter.py         # Formatação de relatórios
+│   ├── services/               # Implementações dos serviços
+│   │   ├── downloader.py       # Download paralelo via yt-dlp
+│   │   ├── analyzer.py         # Análise de áudio + visual (librosa, opencv)
+│   │   └── cutter.py           # Corte e otimização (FFmpeg)
+│   └── utils/
+│       └── ffmpeg.py           # FFmpeg utils (cross-platform)
+├── tests/
+│   ├── conftest.py             # Fixtures compartilhadas
+│   └── unit/                   # Testes unitários
+│       ├── test_config.py
+│       ├── test_types.py
+│       ├── test_file_manager.py
+│       └── test_pipeline.py
+├── examples/
+│   └── platforms.json          # Exemplo de plataformas customizadas
+├── scripts/
+│   ├── install_ffmpeg.py       # Instalação automática do FFmpeg
+│   ├── setup.py                # Configuração inicial do projeto
+│   └── validate.py             # Validação de qualidade do código
+├── pyproject.toml
+└── Makefile
 ```
 
-## 🧠 Princípios de Código Limpo Aplicados
+### Diagrama de Dependências
 
-### ✅ DRY (Don't Repeat Yourself)
-- Configurações centralizadas em `Config`
-- Utilitários reutilizáveis em `utils/`
-- Tipos compartilhados em `types.py`
-
-### ✅ KISS (Keep It Simple, Stupid)
-- Funções com responsabilidade única
-- Interfaces claras e simples
-- Código autoexplicativo
-
-### ✅ Lei de Curly
-- Cada classe tem uma responsabilidade específica
-- Separação clara entre serviços, configuração e tipos
-
-### ✅ YAGNI (You Aren't Gonna Need It)
-- Removidos recursos não utilizados
-- Foco apenas no essencial
-
-### ✅ Regra do Escoteiro
-- Código mais limpo e organizado
-- Estrutura melhorada
-- Documentação clara
-
-## 🔒 Travas de Qualidade
-
-### Pre-commit Hooks
-- **Black**: Formatação automática
-- **isort**: Organização de imports
-- **Flake8**: Linting
-- **MyPy**: Verificação de tipos
-
-### Validação Contínua
-```bash
-# Executa todas as validações
-python scripts/validate.py
-
-# Ou usando make
-make check
+```
+main.py (CLI)
+  └── FastCutSystem (facade)
+        ├── PipelineOrchestrator (fluxo paralelo)
+        │     ├── Downloader (Protocol) ← VideoDownloader
+        │     ├── Analyzer (Protocol)   ← VideoAnalyzer
+        │     └── Cutter (Protocol)     ← VideoCutter
+        ├── FileManager (I/O)
+        └── Reporter (output)
 ```
 
-### Tipagem Forte
-- Todas as funções tipadas
-- Uso de dataclasses para estruturas
-- Validação com MyPy
+### Princípios Aplicados
 
-## 📖 Como Usar
+- **Dependency Injection**: todos os serviços recebem Config por construtor
+- **Protocols (interfaces)**: serviços implementam contratos definidos em `protocols.py`
+- **Factory Pattern**: `create_system()` monta o sistema com implementações padrão
+- **Facade**: `FastCutSystem` expõe API simples, delega para componentes internos
+- **Logging estruturado**: `logging` em vez de `print()`, com níveis e formatação configuráveis
+- **Processamento paralelo**: `ThreadPoolExecutor` para downloads e processamento de vídeos
+
+## Como Usar
 
 ### Execução Básica
 ```bash
@@ -169,95 +185,42 @@ python main.py --test
 
 # Limpar pastas output/ e temp/
 python main.py --clear
+
+# Log detalhado (debug)
+python main.py --verbose
 ```
 
-### Com Make
-```bash
-make run                # Execução normal
-make run-test           # Teste
-make run-channels       # Lista canais
-make clear              # Limpa output/ e temp/
-```
-
-## 🎯 Limites de Duração
+## Limites de Duração
 
 - **YouTube Shorts**: Máximo 60 segundos (9:16)
 - **TikTok**: 15-60 segundos (9:16)
 - **Instagram Reels**: 15-60 segundos (9:16)
 
-## 📊 Exemplo de Saída
+## Travas de Qualidade
 
-```
-🎬 SISTEMA FAST CUT - GERADOR AUTOMÁTICO DE CORTES
-============================================================
-✅ Configuração validada:
-   Canais: 2
-   Duração dos clipes: 15s-60s
-   Clipes por vídeo: 3
+### Pre-commit Hooks
+- **Black**: Formatação automática
+- **isort**: Organização de imports
+- **Flake8**: Linting
+- **MyPy**: Verificação de tipos
 
-🔽 ETAPA 1: DOWNLOAD DE VÍDEOS
-----------------------------------------
-📺 Processando canal: UC_x5XG1OV2P6uZZ5FSM9Ttw
-🔍 Buscando vídeos do canal: UC_x5XG1OV2P6uZZ5FSM9Ttw
-⬇️  Baixando: Como fazer vídeos virais
-✅ Vídeo baixado: Como_fazer_videos_virais.mp4
-✅ Download concluído: 3 vídeos
-
-🔍 ETAPA 2: ANÁLISE E GERAÇÃO DE CORTES
-----------------------------------------
-📹 Processando 1/3: Como_fazer_videos_virais.mp4
-🔍 Analisando: Como_fazer_videos_virais.mp4
-✂️  3 clipes encontrados
-✂️  Processando clipe 1/3
-✅ Otimizado para youtube_shorts: Como_fazer_videos_virais_clip_1_youtube_shorts.mp4
-✅ 9 clipes gerados
-
-📊 RELATÓRIO FINAL
-============================================================
-⏱️  Tempo de execução: 0:03:45
-📥 Vídeos baixados: 3
-🔍 Vídeos analisados: 3
-✂️  Total de clipes: 27
-
-📱 CLIPES POR PLATAFORMA:
-  Youtube Shorts: 9 clipes
-  Tiktok: 9 clipes
-  Instagram Reels: 9 clipes
-
-📈 Taxa de sucesso: 100.0%
-🎯 Clipes salvos em: output
-============================================================
-```
-
-## 🔧 Desenvolvimento
-
-### Configuração do Ambiente
+### Testes
 ```bash
-# Instalar em modo desenvolvimento
-pip install -e ".[dev]"
+# Executa testes unitários
+python -m pytest tests/ -v
 
-# Configurar hooks
-pre-commit install
-
-# Executar validações
-make check
+# Com cobertura
+python -m pytest tests/ --cov=fast_cut
 ```
 
-### Estrutura de Commits
-O projeto usa pre-commit hooks que garantem:
-- Código formatado (Black)
-- Imports organizados (isort)
-- Linting aprovado (Flake8)
-- Tipos verificados (MyPy)
-
-## ⚠️ Aviso Legal
+## Aviso Legal
 
 - Use apenas com canais autorizados
 - Respeite direitos autorais
 - Teste antes de usar em produção
 - Sistema fornecido "como está"
 
-## 🤝 Contribuições
+## Contribuições
 
 1. Fork o projeto
 2. Crie uma branch (`git checkout -b feature/nova-funcionalidade`)

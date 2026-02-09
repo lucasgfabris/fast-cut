@@ -2,13 +2,29 @@
 """Fast Cut - Sistema de Geração Automática de Cortes para Redes Sociais."""
 
 import argparse
+import logging
 import sys
-from pathlib import Path
 
-# Adiciona src ao path para imports
-sys.path.insert(0, str(Path(__file__).parent / "src"))
+from fast_cut.core.config import Config
+from fast_cut.core.system import create_system
 
-from fast_cut.core.system import FastCutSystem
+
+def setup_logging(verbose: bool = False) -> None:
+    """Configura o logging do sistema."""
+    level = logging.DEBUG if verbose else logging.INFO
+
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setLevel(level)
+
+    formatter = logging.Formatter(
+        "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        datefmt="%H:%M:%S",
+    )
+    handler.setFormatter(formatter)
+
+    root_logger = logging.getLogger("fast_cut")
+    root_logger.setLevel(level)
+    root_logger.addHandler(handler)
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -54,6 +70,13 @@ def create_parser() -> argparse.ArgumentParser:
         help="Processa um vídeo específico (URL do YouTube ou caminho local)",
     )
 
+    parser.add_argument(
+        "--verbose",
+        "-v",
+        action="store_true",
+        help="Ativa log detalhado (debug)",
+    )
+
     return parser
 
 
@@ -62,10 +85,18 @@ def main() -> None:
     parser = create_parser()
     args = parser.parse_args()
 
+    setup_logging(verbose=args.verbose)
+
     try:
-        # Para comandos simples, não mostra o cabeçalho completo
         show_header = not (args.list_channels or args.test or args.clear)
-        system = FastCutSystem(show_header=show_header)
+
+        config = Config.from_env()
+
+        # Validação apenas para comandos que precisam de canais
+        if not (args.clear or args.test or args.video):
+            config.validate()
+
+        system = create_system(config=config, show_header=show_header)
 
         if args.clear:
             system.clear_all_outputs()
@@ -81,15 +112,16 @@ def main() -> None:
                 max_videos_per_channel=args.max_videos,
                 skip_download=args.skip_download,
             )
-
-            # Código de saída baseado no sucesso
             sys.exit(0 if stats.generated_clips > 0 else 1)
 
     except KeyboardInterrupt:
-        print("\n⏹️  Execução interrompida pelo usuário")
+        print("\nExecução interrompida pelo usuário")
         sys.exit(130)
+    except ValueError as e:
+        logging.getLogger("fast_cut").error("Configuração inválida: %s", e)
+        sys.exit(1)
     except Exception as e:
-        print(f"❌ Erro fatal: {e}")
+        logging.getLogger("fast_cut").error("Erro fatal: %s", e)
         sys.exit(1)
 
 

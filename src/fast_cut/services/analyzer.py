@@ -1,6 +1,7 @@
 """Serviço de análise de vídeos."""
 
-import os
+import logging
+import random
 from pathlib import Path
 from typing import List
 
@@ -14,6 +15,8 @@ from ..core.config import Config
 from ..core.types import Clip, SpeechSegment, TimelinePoint, VideoInfo
 from ..utils.ffmpeg import FFmpegUtils
 
+logger = logging.getLogger(__name__)
+
 
 class AnalysisError(Exception):
     """Erro específico de análise."""
@@ -24,7 +27,8 @@ class AnalysisError(Exception):
 class VideoAnalyzer:
     """Serviço responsável pela análise de vídeos."""
 
-    def __init__(self) -> None:
+    def __init__(self, config: Config) -> None:
+        self._config = config
         self._setup_audio_tools()
 
     def _setup_audio_tools(self) -> None:
@@ -32,12 +36,15 @@ class VideoAnalyzer:
         ffmpeg = FFmpegUtils()
         ffmpeg.setup_environment()
 
-        # Configura pydub para usar FFmpeg local
-        ffmpeg_dir = Path.cwd() / "ffmpeg"
-        if ffmpeg_dir.exists():
-            AudioSegment.converter = str(ffmpeg_dir / "ffmpeg.exe")
-            AudioSegment.ffmpeg = str(ffmpeg_dir / "ffmpeg.exe")
-            AudioSegment.ffprobe = str(ffmpeg_dir / "ffprobe.exe")
+        # Configura pydub para usar FFmpeg local (cross-platform)
+        ffmpeg_path = FFmpegUtils.get_local_ffmpeg_path()
+        ffprobe_path = FFmpegUtils.get_local_ffprobe_path()
+
+        if ffmpeg_path:
+            AudioSegment.converter = str(ffmpeg_path)
+            AudioSegment.ffmpeg = str(ffmpeg_path)
+        if ffprobe_path:
+            AudioSegment.ffprobe = str(ffprobe_path)
 
     def get_video_info(self, video_path: Path) -> VideoInfo:
         """Obtém informações básicas do vídeo."""
@@ -64,7 +71,7 @@ class VideoAnalyzer:
 
     def find_best_clips(self, video_path: Path) -> List[Clip]:
         """Encontra os melhores clipes em um vídeo."""
-        print(f"🔍 Analisando: {video_path.name}")
+        logger.info("Analisando: %s", video_path.name)
 
         try:
             audio_path = self._extract_audio(video_path)
@@ -84,7 +91,9 @@ class VideoAnalyzer:
             return clips
 
         except Exception as e:
-            raise AnalysisError(f"Falha na análise de {video_path.name}: {e}")
+            raise AnalysisError(
+                f"Falha na análise de {video_path.name}: {e}"
+            )
 
     def _extract_audio(self, video_path: Path) -> Path:
         """Extrai áudio do vídeo."""
@@ -97,14 +106,19 @@ class VideoAnalyzer:
         except Exception as e:
             raise AnalysisError(f"Falha na extração de áudio: {e}")
 
-    def _analyze_audio_energy(self, audio_path: Path) -> List[TimelinePoint]:
+    def _analyze_audio_energy(
+        self, audio_path: Path
+    ) -> List[TimelinePoint]:
         """Analisa energia do áudio."""
         try:
             y, sr = librosa.load(str(audio_path))
 
-            # Calcula RMS energy
-            rms = librosa.feature.rms(y=y, frame_length=2048, hop_length=512)[0]
-            times = librosa.frames_to_time(np.arange(len(rms)), sr=sr, hop_length=512)
+            rms = librosa.feature.rms(
+                y=y, frame_length=2048, hop_length=512
+            )[0]
+            times = librosa.frames_to_time(
+                np.arange(len(rms)), sr=sr, hop_length=512
+            )
 
             # Normaliza
             rms_norm = (rms - np.min(rms)) / (np.max(rms) - np.min(rms))
@@ -112,7 +126,7 @@ class VideoAnalyzer:
             return list(zip(times, rms_norm))
 
         except Exception as e:
-            print(f"⚠️  Erro na análise de energia: {e}")
+            logger.warning("Erro na análise de energia: %s", e)
             return []
 
     def _detect_speech(self, audio_path: Path) -> List[SpeechSegment]:
@@ -123,13 +137,16 @@ class VideoAnalyzer:
             nonsilent_ranges = detect_nonsilent(
                 audio,
                 min_silence_len=500,
-                silence_thresh=Config.SILENCE_THRESHOLD,
+                silence_thresh=self._config.silence_threshold,
             )
 
-            return [(start / 1000, end / 1000) for start, end in nonsilent_ranges]
+            return [
+                (start / 1000, end / 1000)
+                for start, end in nonsilent_ranges
+            ]
 
         except Exception as e:
-            print(f"⚠️  Erro na detecção de fala: {e}")
+            logger.warning("Erro na detecção de fala: %s", e)
             return []
 
     def _analyze_visual_activity(
@@ -145,7 +162,7 @@ class VideoAnalyzer:
 
             frame_count = 0
             prev_frame = None
-            activity_timeline = []
+            activity_timeline: List[TimelinePoint] = []
 
             while True:
                 ret, frame = cap.read()
@@ -158,9 +175,13 @@ class VideoAnalyzer:
 
                     if prev_frame is not None:
                         frame_diff = cv2.absdiff(prev_frame, gray)
-                        thresh = cv2.threshold(frame_diff, 25, 255, cv2.THRESH_BINARY)[1]
+                        thresh = cv2.threshold(
+                            frame_diff, 25, 255, cv2.THRESH_BINARY
+                        )[1]
 
-                        activity = np.sum(thresh) / (thresh.shape[0] * thresh.shape[1])
+                        activity = np.sum(thresh) / (
+                            thresh.shape[0] * thresh.shape[1]
+                        )
                         timestamp = frame_count / fps
 
                         activity_timeline.append((timestamp, activity))
@@ -173,7 +194,7 @@ class VideoAnalyzer:
 
             # Normaliza
             if activity_timeline:
-                activities = [activity for _, activity in activity_timeline]
+                activities = [act for _, act in activity_timeline]
                 min_act, max_act = min(activities), max(activities)
 
                 if max_act > min_act:
@@ -185,7 +206,7 @@ class VideoAnalyzer:
             return activity_timeline
 
         except Exception as e:
-            print(f"⚠️  Erro na análise visual: {e}")
+            logger.warning("Erro na análise visual: %s", e)
             return []
 
     def _combine_analyses(
@@ -195,17 +216,19 @@ class VideoAnalyzer:
         visual_activity: List[TimelinePoint],
     ) -> List[TimelinePoint]:
         """Combina análises para encontrar melhores momentos."""
-        scores = {}
+        scores: dict[float, float] = {}
 
         # Pontuação por energia
         for timestamp, energy in energy_timeline:
-            if energy > Config.ENERGY_THRESHOLD:
+            if energy > self._config.energy_threshold:
                 scores[timestamp] = scores.get(timestamp, 0) + energy * 0.4
 
         # Pontuação por atividade visual
         for timestamp, activity in visual_activity:
             if activity > 0.3:
-                scores[timestamp] = scores.get(timestamp, 0) + activity * 0.3
+                scores[timestamp] = (
+                    scores.get(timestamp, 0) + activity * 0.3
+                )
 
         # Bonificação para fala
         for start, end in speech_segments:
@@ -216,24 +239,31 @@ class VideoAnalyzer:
         best_moments = [(ts, score) for ts, score in scores.items()]
         return sorted(best_moments, key=lambda x: x[1], reverse=True)
 
-    def _generate_clips(self, best_moments: List[TimelinePoint], video_path: Path) -> List[Clip]:
+    def _generate_clips(
+        self, best_moments: List[TimelinePoint], video_path: Path
+    ) -> List[Clip]:
         """Gera clipes baseados nos melhores momentos."""
         video_info = self.get_video_info(video_path)
-        clips = []
-        used_intervals = []
+        clips: List[Clip] = []
+        used_intervals: list[tuple[float, float]] = []
 
-        import random
-
-        for timestamp, score in best_moments[: Config.CLIPS_PER_VIDEO * 3]:
+        for timestamp, score in best_moments[
+            : self._config.clips_per_video * 3
+        ]:
             clip_duration = random.randint(
-                Config.MIN_CLIP_DURATION, Config.MAX_CLIP_DURATION
+                self._config.min_clip_duration,
+                self._config.max_clip_duration,
             )
 
             clip_start = max(0, timestamp - clip_duration // 2)
-            clip_end = min(video_info.duration, clip_start + clip_duration)
+            clip_end = min(
+                video_info.duration, clip_start + clip_duration
+            )
 
-            if clip_end - clip_start < Config.MIN_CLIP_DURATION:
-                clip_start = max(0, clip_end - Config.MIN_CLIP_DURATION)
+            if clip_end - clip_start < self._config.min_clip_duration:
+                clip_start = max(
+                    0, clip_end - self._config.min_clip_duration
+                )
 
             # Verifica sobreposição
             overlaps = any(
@@ -241,7 +271,10 @@ class VideoAnalyzer:
                 for used_start, used_end in used_intervals
             )
 
-            if not overlaps and len(clips) < Config.CLIPS_PER_VIDEO:
+            if (
+                not overlaps
+                and len(clips) < self._config.clips_per_video
+            ):
                 clip = Clip(
                     start_time=clip_start,
                     end_time=clip_end,
@@ -256,5 +289,5 @@ class VideoAnalyzer:
 
         clips.sort(key=lambda x: x.score, reverse=True)
 
-        print(f"✂️  {len(clips)} clipes encontrados")
+        logger.info("%d clipes encontrados", len(clips))
         return clips

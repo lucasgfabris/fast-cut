@@ -46,7 +46,7 @@ def main() -> int:
         
         print("\n🎉 Configuração concluída!")
         print("\nPróximos passos:")
-        print("1. Copie env_example.txt para .env e configure")
+        print("1. Copie .env.example para .env e configure")
         print("2. Execute: make run-test")
         print("3. Execute: make check  # Para validar código")
         

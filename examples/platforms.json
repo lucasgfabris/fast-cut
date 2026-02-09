@@ -1,0 +1,26 @@
+{
+    "youtube_shorts": {
+        "resolution": [1080, 1920],
+        "fps": 30,
+        "format": "mp4",
+        "max_duration": 60
+    },
+    "tiktok": {
+        "resolution": [1080, 1920],
+        "fps": 30,
+        "format": "mp4",
+        "max_duration": 60
+    },
+    "instagram_reels": {
+        "resolution": [1080, 1920],
+        "fps": 30,
+        "format": "mp4",
+        "max_duration": 60
+    },
+    "twitter_video": {
+        "resolution": [1280, 720],
+        "fps": 30,
+        "format": "mp4",
+        "max_duration": 140
+    }
+}

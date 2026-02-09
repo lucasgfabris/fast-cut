@@ -1,11 +1,14 @@
 """Serviço de corte de vídeos."""
 
+import logging
 from pathlib import Path
 from typing import List
 
 from ..core.config import Config
 from ..core.types import Clip, ProcessingResults
 from ..utils.ffmpeg import FFmpegError, FFmpegUtils
+
+logger = logging.getLogger(__name__)
 
 
 class CuttingError(Exception):
@@ -17,67 +20,90 @@ class CuttingError(Exception):
 class VideoCutter:
     """Serviço responsável pelo corte e otimização de vídeos."""
 
-    def __init__(self) -> None:
+    def __init__(self, config: Config) -> None:
+        self._config = config
         self._ffmpeg = FFmpegUtils()
-        Config.create_directories()
+        self._config.create_directories()
 
-    def process_clips(self, clips: List[Clip], source_video: Path, video_num: int = 1, total_videos: int = 1) -> ProcessingResults:
+    def process_clips(
+        self,
+        clips: List[Clip],
+        source_video: Path,
+        video_num: int = 1,
+        total_videos: int = 1,
+    ) -> ProcessingResults:
         """Processa uma lista de clipes para todas as plataformas."""
         if not self._ffmpeg.is_available:
             raise CuttingError("FFmpeg não está disponível")
 
-        results = {platform: [] for platform in Config.PLATFORM_SPECS}
-        
-        # Extrai o video_id do nome do arquivo (fastcut_original_{video_id})
+        results: ProcessingResults = {
+            platform: [] for platform in self._config.platform_specs
+        }
+
+        # Extrai o video_id do nome do arquivo
         video_name = source_video.stem
         if video_name.startswith("fastcut_original_"):
             video_id = video_name.replace("fastcut_original_", "")
         else:
             video_id = video_name
-        
+
         total_clips = len(clips)
 
         for i, clip in enumerate(clips, 1):
             clip_progress = (i / total_clips) * 100
-            print(f"✂️  Processando clipe {i}/{total_clips} ({clip_progress:.1f}%)")
+            logger.info(
+                "Processando clipe %d/%d (%.1f%%)",
+                i,
+                total_clips,
+                clip_progress,
+            )
 
-            temp_clip = Config.TEMP_DIR / f"fastcut_temp_{video_id}_{i}.mp4"
+            temp_clip = (
+                self._config.temp_dir
+                / f"fastcut_temp_{video_id}_{i}.mp4"
+            )
 
             try:
-                # Corta o clipe
                 self._cut_clip(source_video, clip, temp_clip)
 
-                # Otimiza para cada plataforma
-                platform_count = len(Config.PLATFORM_SPECS)
-                for j, platform in enumerate(Config.PLATFORM_SPECS, 1):
-                    platform_dir = Config.OUTPUT_DIR / platform
-                    output_path = platform_dir / f"fastcut_cut_{video_id}_{i}_{platform}.mp4"
-                    
-                    platform_progress = (j / platform_count) * 100
-                    print(f"   📱 {platform} ({platform_progress:.0f}%)", end="\r")
+                for platform in self._config.platform_specs:
+                    platform_dir = self._config.output_dir / platform
+                    output_path = (
+                        platform_dir
+                        / f"fastcut_cut_{video_id}_{i}_{platform}.mp4"
+                    )
 
-                    if self._optimize_for_platform(temp_clip, platform, output_path):
+                    if self._optimize_for_platform(
+                        temp_clip, platform, output_path
+                    ):
                         results[platform].append(str(output_path))
-                
-                print()  # Nova linha após progresso das plataformas
 
             except Exception as e:
-                print(f"❌ Erro no clipe {i}: {e}")
+                logger.error("Erro no clipe %d: %s", i, e)
             finally:
                 temp_clip.unlink(missing_ok=True)
 
         return results
 
-    def _cut_clip(self, video_path: Path, clip: Clip, output_path: Path) -> None:
+    def _cut_clip(
+        self, video_path: Path, clip: Clip, output_path: Path
+    ) -> None:
         """Corta um clipe do vídeo."""
         args = [
-            "-i", str(video_path),
-            "-ss", str(clip.start_time),
-            "-t", str(clip.duration),
-            "-c:v", "libx264",
-            "-c:a", "aac",
-            "-preset", "fast",
-            "-crf", "23",
+            "-i",
+            str(video_path),
+            "-ss",
+            str(clip.start_time),
+            "-t",
+            str(clip.duration),
+            "-c:v",
+            "libx264",
+            "-c:a",
+            "aac",
+            "-preset",
+            "fast",
+            "-crf",
+            "23",
             "-y",
             str(output_path),
         ]
@@ -96,19 +122,32 @@ class VideoCutter:
     ) -> bool:
         """Otimiza vídeo para uma plataforma específica."""
         try:
-            spec = Config.PLATFORM_SPECS[platform]
+            spec = self._config.platform_specs[platform]
             width, height = spec.resolution
 
             args = [
-                "-i", str(input_path),
-                "-vf", f"scale={width}:{height}:force_original_aspect_ratio=increase,crop={width}:{height}",
-                "-r", str(spec.fps),
-                "-c:v", "libx264",
-                "-preset", "fast",
-                "-crf", "23",
-                "-c:a", "aac",
-                "-b:a", Config.AUDIO_BITRATE,
-                "-movflags", "+faststart",
+                "-i",
+                str(input_path),
+                "-vf",
+                (
+                    f"scale={width}:{height}"
+                    f":force_original_aspect_ratio=increase,"
+                    f"crop={width}:{height}"
+                ),
+                "-r",
+                str(spec.fps),
+                "-c:v",
+                "libx264",
+                "-preset",
+                "fast",
+                "-crf",
+                "23",
+                "-c:a",
+                "aac",
+                "-b:a",
+                self._config.audio_bitrate,
+                "-movflags",
+                "+faststart",
                 "-y",
                 str(output_path),
             ]
@@ -116,21 +155,23 @@ class VideoCutter:
             self._ffmpeg.run_command(args)
 
             if output_path.exists():
-                print(f"✅ Otimizado para {platform}: {output_path.name}")
+                logger.info(
+                    "Otimizado para %s: %s", platform, output_path.name
+                )
                 return True
 
             return False
 
         except FFmpegError as e:
-            print(f"❌ Erro na otimização para {platform}: {e}")
+            logger.error("Erro na otimização para %s: %s", platform, e)
             return False
 
     def cleanup(self) -> None:
         """Remove arquivos temporários de corte."""
         try:
             for pattern in ["fastcut_temp_*.mp4", "temp-audio*"]:
-                for file in Config.TEMP_DIR.glob(pattern):
+                for file in self._config.temp_dir.glob(pattern):
                     file.unlink()
-            print("🧹 Arquivos temporários de corte removidos")
+            logger.info("Arquivos temporários de corte removidos")
         except Exception as e:
-            print(f"⚠️  Erro na limpeza: {e}")
+            logger.warning("Erro na limpeza: %s", e)

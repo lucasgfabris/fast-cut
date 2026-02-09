@@ -1,9 +1,23 @@
 """Utilitários para FFmpeg."""
 
+import logging
 import os
+import platform
 import subprocess
 from pathlib import Path
 from typing import List, Optional
+
+logger = logging.getLogger(__name__)
+
+
+def _ffmpeg_binary_name() -> str:
+    """Retorna o nome do executável do FFmpeg conforme o SO."""
+    return "ffmpeg.exe" if platform.system() == "Windows" else "ffmpeg"
+
+
+def _ffprobe_binary_name() -> str:
+    """Retorna o nome do executável do FFprobe conforme o SO."""
+    return "ffprobe.exe" if platform.system() == "Windows" else "ffprobe"
 
 
 class FFmpegError(Exception):
@@ -21,21 +35,25 @@ class FFmpegUtils:
     def _find_ffmpeg(self) -> Optional[Path]:
         """Localiza o executável do FFmpeg."""
         # Verifica FFmpeg local primeiro
-        local_ffmpeg = Path.cwd() / "ffmpeg" / "ffmpeg.exe"
+        local_ffmpeg = Path.cwd() / "ffmpeg" / _ffmpeg_binary_name()
         if local_ffmpeg.exists():
             return local_ffmpeg
 
         # Verifica FFmpeg no PATH
         try:
             result = subprocess.run(
-                ["ffmpeg", "-version"],
+                [_ffmpeg_binary_name(), "-version"],
                 capture_output=True,
                 check=True,
                 timeout=5,
             )
             if result.returncode == 0:
-                return Path("ffmpeg")
-        except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
+                return Path(_ffmpeg_binary_name())
+        except (
+            subprocess.CalledProcessError,
+            FileNotFoundError,
+            subprocess.TimeoutExpired,
+        ):
             pass
 
         return None
@@ -72,3 +90,21 @@ class FFmpegUtils:
             current_path = os.environ.get("PATH", "")
             if str(ffmpeg_dir) not in current_path:
                 os.environ["PATH"] = f"{ffmpeg_dir}{os.pathsep}{current_path}"
+
+    @staticmethod
+    def get_local_ffmpeg_path() -> Optional[Path]:
+        """Retorna o caminho do FFmpeg local se existir."""
+        ffmpeg_dir = Path.cwd() / "ffmpeg"
+        ffmpeg_path = ffmpeg_dir / _ffmpeg_binary_name()
+        if ffmpeg_path.exists():
+            return ffmpeg_path
+        return None
+
+    @staticmethod
+    def get_local_ffprobe_path() -> Optional[Path]:
+        """Retorna o caminho do FFprobe local se existir."""
+        ffmpeg_dir = Path.cwd() / "ffmpeg"
+        ffprobe_path = ffmpeg_dir / _ffprobe_binary_name()
+        if ffprobe_path.exists():
+            return ffprobe_path
+        return None
