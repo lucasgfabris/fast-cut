@@ -42,6 +42,8 @@ class VideoDownloader:
             "no_warnings": False,
             "extract_flat": False,
             "noplaylist": True,
+            # Habilita download do solver de challenges JS do YouTube
+            "remote_components": ["ejs:github"],
         }
 
     def get_channel_videos(
