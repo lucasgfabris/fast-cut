@@ -1,9 +1,9 @@
 """Sistema principal do Fast Cut (facade)."""
 
 import logging
-import sys
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 from .config import Config
 from .file_manager import FileManager
@@ -144,7 +144,7 @@ class FastCutSystem:
 
     # -- Helpers internos -----------------------------------------------------
 
-    def _resolve_video(self, video_path_str: str) -> Path | None:
+    def _resolve_video(self, video_path_str: str) -> Optional[Path]:
         """Resolve uma string para um Path de vídeo (URL ou local)."""
         if video_path_str.startswith(("http://", "https://", "www.")):
             logger.info("Link detectado: %s", video_path_str)
@@ -188,7 +188,7 @@ class FastCutSystem:
 
 
 def create_system(
-    config: Config | None = None, show_header: bool = True
+    config: Optional[Config] = None, show_header: bool = True
 ) -> FastCutSystem:
     """Factory que monta o sistema com implementações padrão."""
     from ..services.analyzer import VideoAnalyzer

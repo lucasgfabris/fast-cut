@@ -2,9 +2,6 @@
 
 from pathlib import Path
 from typing import List, Optional
-from unittest.mock import MagicMock
-
-import pytest
 
 from fast_cut.core.config import Config
 from fast_cut.core.file_manager import FileManager
@@ -17,7 +14,7 @@ from fast_cut.core.types import Clip, ProcessingResults, VideoMetadata
 class FakeDownloader:
     """Implementação fake do Downloader."""
 
-    def __init__(self, videos_to_return: List[Path] | None = None) -> None:
+    def __init__(self, videos_to_return: Optional[List[Path]] = None) -> None:
         self._videos = videos_to_return or []
         self.cleanup_called = False
 
@@ -39,7 +36,7 @@ class FakeDownloader:
 class FakeAnalyzer:
     """Implementação fake do Analyzer."""
 
-    def __init__(self, clips: List[Clip] | None = None) -> None:
+    def __init__(self, clips: Optional[List[Clip]] = None) -> None:
         self._clips = clips or []
 
     def find_best_clips(self, video_path: Path) -> List[Clip]:
@@ -49,7 +46,7 @@ class FakeAnalyzer:
 class FakeCutter:
     """Implementação fake do Cutter."""
 
-    def __init__(self, results: ProcessingResults | None = None) -> None:
+    def __init__(self, results: Optional[ProcessingResults] = None) -> None:
         self._results = results or {}
         self.cleanup_called = False
 

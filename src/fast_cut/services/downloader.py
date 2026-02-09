@@ -4,7 +4,7 @@ import json
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 import yt_dlp
 
@@ -152,13 +152,14 @@ class VideoDownloader:
         logger.info("Download concluído: %d vídeos", len(downloaded))
         return downloaded
 
-    def get_metadata(self, video_path: Path) -> Optional[dict]:
+    def get_metadata(self, video_path: Path) -> Optional[Dict[str, Any]]:
         """Obtém metadados de um vídeo."""
         info_path = video_path.with_suffix(".info.json")
 
         if info_path.exists():
             try:
-                return json.loads(info_path.read_text(encoding="utf-8"))
+                data: Dict[str, Any] = json.loads(info_path.read_text(encoding="utf-8"))
+                return data
             except Exception as e:
                 logger.warning("Erro ao ler metadados: %s", e)
 

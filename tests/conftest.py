@@ -1,6 +1,5 @@
 """Fixtures compartilhadas para todos os testes."""
 
-import tempfile
 from pathlib import Path
 
 import pytest

@@ -1,6 +1,6 @@
 """Tipos e estruturas de dados do sistema."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -53,14 +53,8 @@ class ProcessingStats:
     downloaded_videos: int = 0
     analyzed_videos: int = 0
     generated_clips: int = 0
-    clips_by_platform: Dict[str, int] = None
-    errors: List[str] = None
-
-    def __post_init__(self) -> None:
-        if self.clips_by_platform is None:
-            self.clips_by_platform = {}
-        if self.errors is None:
-            self.errors = []
+    clips_by_platform: Dict[str, int] = field(default_factory=dict)
+    errors: List[str] = field(default_factory=list)
 
 
 TimelinePoint = Tuple[float, float]  # (timestamp, value)

@@ -2,8 +2,6 @@
 
 from pathlib import Path
 
-import pytest
-
 from fast_cut.core.config import Config
 from fast_cut.core.file_manager import FileManager
 

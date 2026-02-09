@@ -2,8 +2,6 @@
 
 import logging
 from datetime import timedelta
-from pathlib import Path
-from typing import Dict
 
 from .config import Config
 from .types import ProcessingStats

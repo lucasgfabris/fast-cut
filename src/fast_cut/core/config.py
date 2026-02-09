@@ -5,7 +5,7 @@ import logging
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +64,7 @@ class Config:
     )
 
     @classmethod
-    def from_env(cls, env_path: str | None = None) -> "Config":
+    def from_env(cls, env_path: Optional[str] = None) -> "Config":
         """Cria Config a partir de variáveis de ambiente / .env."""
         from dotenv import load_dotenv
 
