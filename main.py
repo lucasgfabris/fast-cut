@@ -83,6 +83,12 @@ def create_parser() -> argparse.ArgumentParser:
         help="Ativa log detalhado (debug)",
     )
 
+    parser.add_argument(
+        "--no-subtitles",
+        action="store_true",
+        help="Desabilita geração de legendas automáticas",
+    )
+
     return parser
 
 
@@ -97,6 +103,10 @@ def main() -> None:
         show_header = not (args.list_channels or args.test or args.clear)
 
         config = Config.from_env()
+
+        # Override de legendas via CLI
+        if args.no_subtitles:
+            config.subtitles_enabled = False
 
         # Validação apenas para comandos que precisam de canais
         if not (args.clear or args.test or args.video):

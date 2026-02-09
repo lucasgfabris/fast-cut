@@ -57,6 +57,15 @@ class ProcessingStats:
     errors: List[str] = field(default_factory=list)
 
 
+@dataclass
+class WordSegment:
+    """Uma palavra com timestamps de início e fim."""
+
+    word: str
+    start: float
+    end: float
+
+
 TimelinePoint = Tuple[float, float]  # (timestamp, value)
 SpeechSegment = Tuple[float, float]  # (start_time, end_time)
 ProcessingResults = Dict[str, List[str]]  # platform -> list of file paths

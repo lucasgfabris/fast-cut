@@ -3,7 +3,7 @@
 from pathlib import Path
 from typing import List, Optional, Protocol
 
-from .types import Clip, ProcessingResults, VideoMetadata
+from .types import Clip, ProcessingResults, VideoMetadata, WordSegment
 
 
 class Downloader(Protocol):
@@ -33,6 +33,23 @@ class Analyzer(Protocol):
 
     def find_best_clips(self, video_path: Path) -> List[Clip]:
         """Encontra os melhores clipes em um vídeo."""
+        ...
+
+
+class Transcriber(Protocol):
+    """Interface para serviço de transcrição de vídeos."""
+
+    def transcribe(self, video_path: Path) -> List[WordSegment]:
+        """Transcreve um vídeo e retorna palavras com timestamps."""
+        ...
+
+    def generate_ass(
+        self,
+        words: List[WordSegment],
+        output_path: Path,
+        resolution: tuple,
+    ) -> Path:
+        """Gera arquivo .ASS com legendas estilo viral."""
         ...
 
 

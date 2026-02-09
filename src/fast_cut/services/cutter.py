@@ -2,9 +2,10 @@
 
 import logging
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from ..core.config import Config
+from ..core.protocols import Transcriber
 from ..core.types import Clip, ProcessingResults
 from ..utils.ffmpeg import FFmpegError, FFmpegUtils
 
@@ -20,9 +21,14 @@ class CuttingError(Exception):
 class VideoCutter:
     """Serviço responsável pelo corte e otimização de vídeos."""
 
-    def __init__(self, config: Config) -> None:
+    def __init__(
+        self,
+        config: Config,
+        transcriber: Optional[Transcriber] = None,
+    ) -> None:
         self._config = config
         self._ffmpeg = FFmpegUtils()
+        self._transcriber = transcriber
         self._config.create_directories()
 
     def process_clips(
@@ -68,12 +74,86 @@ class VideoCutter:
                     if self._cut_and_optimize(
                         source_video, clip, platform, output_path
                     ):
+                        # Queima legendas se habilitado
+                        if self._should_add_subtitles():
+                            self._burn_subtitles(output_path, platform)
+
                         results[platform].append(str(output_path))
 
             except Exception as e:
                 logger.error("Erro no clipe %d: %s", i, e)
 
         return results
+
+    def _should_add_subtitles(self) -> bool:
+        """Verifica se deve adicionar legendas."""
+        return self._config.subtitles_enabled and self._transcriber is not None
+
+    def _burn_subtitles(self, video_path: Path, platform: str) -> None:
+        """Transcreve e queima legendas no vídeo."""
+        if self._transcriber is None:
+            return
+
+        spec = self._config.platform_specs[platform]
+        ass_path = video_path.with_suffix(".ass")
+
+        try:
+            # 1. Transcreve o clip
+            words = self._transcriber.transcribe(video_path)
+
+            if not words:
+                logger.warning("Nenhuma fala detectada em %s", video_path.name)
+                return
+
+            # 2. Gera o arquivo .ass
+            self._transcriber.generate_ass(words, ass_path, spec.resolution)
+
+            # 3. Re-encoda com legenda queimada
+            temp_output = video_path.with_name(f"_sub_{video_path.name}")
+
+            # Escapa backslashes e dois-pontos no path do ASS
+            # para o filtro do FFmpeg no Windows
+            ass_str = str(ass_path).replace("\\", "/")
+            ass_str = ass_str.replace(":", "\\:")
+
+            args = [
+                "-i",
+                str(video_path),
+                "-vf",
+                f"ass={ass_str}",
+                "-c:v",
+                "libx264",
+                "-preset",
+                "medium",
+                "-crf",
+                "18",
+                "-c:a",
+                "copy",
+                "-movflags",
+                "+faststart",
+                "-y",
+                str(temp_output),
+            ]
+
+            self._ffmpeg.run_command(args)
+
+            # 4. Substitui o original pelo legendado
+            if temp_output.exists():
+                video_path.unlink()
+                temp_output.rename(video_path)
+                logger.info("Legenda aplicada: %s", video_path.name)
+
+        except FFmpegError as e:
+            logger.error(
+                "Erro ao queimar legenda em %s: %s",
+                video_path.name,
+                e,
+            )
+        finally:
+            # Limpa arquivos temporários de legenda
+            ass_path.unlink(missing_ok=True)
+            temp = video_path.with_name(f"_sub_{video_path.name}")
+            temp.unlink(missing_ok=True)
 
     def _cut_and_optimize(
         self,
@@ -144,7 +224,12 @@ class VideoCutter:
     def cleanup(self) -> None:
         """Remove arquivos temporários de corte."""
         try:
-            for pattern in ["fastcut_temp_*.mp4", "temp-audio*"]:
+            for pattern in [
+                "fastcut_temp_*.mp4",
+                "temp-audio*",
+                "*.ass",
+                "_sub_*.mp4",
+            ]:
                 for file in self._config.temp_dir.glob(pattern):
                     file.unlink()
             logger.info("Arquivos temporários de corte removidos")

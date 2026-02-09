@@ -194,14 +194,18 @@ def create_system(
     from ..services.analyzer import VideoAnalyzer
     from ..services.cutter import VideoCutter
     from ..services.downloader import VideoDownloader
+    from ..services.transcriber import VideoTranscriber
 
     cfg = config or Config.from_env()
     cfg.create_directories()
+
+    # Cria transcriber apenas se legendas estão habilitadas
+    transcriber = VideoTranscriber(cfg) if cfg.subtitles_enabled else None
 
     return FastCutSystem(
         config=cfg,
         downloader=VideoDownloader(cfg),
         analyzer=VideoAnalyzer(cfg),
-        cutter=VideoCutter(cfg),
+        cutter=VideoCutter(cfg, transcriber=transcriber),
         show_header=show_header,
     )

@@ -58,6 +58,11 @@ class Config:
     energy_threshold: float = 0.7
     silence_threshold: int = -40
 
+    # Configurações de legenda
+    subtitles_enabled: bool = True
+    whisper_model: str = "small"
+    subtitle_language: str = "pt"
+
     # Especificações das plataformas
     platform_specs: Dict[str, PlatformSpec] = field(
         default_factory=lambda: dict(DEFAULT_PLATFORM_SPECS)
@@ -91,6 +96,9 @@ class Config:
             audio_bitrate=os.getenv("AUDIO_BITRATE", "192k"),
             energy_threshold=float(os.getenv("ENERGY_THRESHOLD", "0.7")),
             silence_threshold=int(os.getenv("SILENCE_THRESHOLD", "-40")),
+            subtitles_enabled=os.getenv("SUBTITLES_ENABLED", "true").lower() == "true",
+            whisper_model=os.getenv("WHISPER_MODEL", "small"),
+            subtitle_language=os.getenv("SUBTITLE_LANGUAGE", "pt"),
             platform_specs=platform_specs,
         )
 
