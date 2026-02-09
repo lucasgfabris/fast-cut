@@ -40,7 +40,7 @@ class Config:
     CLIPS_PER_VIDEO: int = int(os.getenv("CLIPS_PER_VIDEO", "3"))
 
     # Configurações de qualidade
-    VIDEO_QUALITY: str = os.getenv("VIDEO_QUALITY", "720p")
+    VIDEO_QUALITY: str = os.getenv("VIDEO_QUALITY", "1080p")
     AUDIO_BITRATE: str = os.getenv("AUDIO_BITRATE", "128k")
 
     # Configurações de análise

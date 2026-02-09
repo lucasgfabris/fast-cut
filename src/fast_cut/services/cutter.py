@@ -21,30 +21,45 @@ class VideoCutter:
         self._ffmpeg = FFmpegUtils()
         Config.create_directories()
 
-    def process_clips(self, clips: List[Clip], source_video: Path) -> ProcessingResults:
+    def process_clips(self, clips: List[Clip], source_video: Path, video_num: int = 1, total_videos: int = 1) -> ProcessingResults:
         """Processa uma lista de clipes para todas as plataformas."""
         if not self._ffmpeg.is_available:
             raise CuttingError("FFmpeg não está disponível")
 
         results = {platform: [] for platform in Config.PLATFORM_SPECS}
+        
+        # Extrai o video_id do nome do arquivo (fastcut_original_{video_id})
         video_name = source_video.stem
+        if video_name.startswith("fastcut_original_"):
+            video_id = video_name.replace("fastcut_original_", "")
+        else:
+            video_id = video_name
+        
+        total_clips = len(clips)
 
         for i, clip in enumerate(clips, 1):
-            print(f"✂️  Processando clipe {i}/{len(clips)}")
+            clip_progress = (i / total_clips) * 100
+            print(f"✂️  Processando clipe {i}/{total_clips} ({clip_progress:.1f}%)")
 
-            temp_clip = Config.TEMP_DIR / f"{video_name}_clip_{i}_temp.mp4"
+            temp_clip = Config.TEMP_DIR / f"fastcut_temp_{video_id}_{i}.mp4"
 
             try:
                 # Corta o clipe
                 self._cut_clip(source_video, clip, temp_clip)
 
                 # Otimiza para cada plataforma
-                for platform in Config.PLATFORM_SPECS:
+                platform_count = len(Config.PLATFORM_SPECS)
+                for j, platform in enumerate(Config.PLATFORM_SPECS, 1):
                     platform_dir = Config.OUTPUT_DIR / platform
-                    output_path = platform_dir / f"{video_name}_clip_{i}_{platform}.mp4"
+                    output_path = platform_dir / f"fastcut_cut_{video_id}_{i}_{platform}.mp4"
+                    
+                    platform_progress = (j / platform_count) * 100
+                    print(f"   📱 {platform} ({platform_progress:.0f}%)", end="\r")
 
                     if self._optimize_for_platform(temp_clip, platform, output_path):
                         results[platform].append(str(output_path))
+                
+                print()  # Nova linha após progresso das plataformas
 
             except Exception as e:
                 print(f"❌ Erro no clipe {i}: {e}")
@@ -113,7 +128,7 @@ class VideoCutter:
     def cleanup(self) -> None:
         """Remove arquivos temporários de corte."""
         try:
-            for pattern in ["*_temp.mp4", "temp-audio*"]:
+            for pattern in ["fastcut_temp_*.mp4", "temp-audio*"]:
                 for file in Config.TEMP_DIR.glob(pattern):
                     file.unlink()
             print("🧹 Arquivos temporários de corte removidos")

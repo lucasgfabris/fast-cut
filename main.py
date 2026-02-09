@@ -42,6 +42,18 @@ def create_parser() -> argparse.ArgumentParser:
         help="Executa teste do sistema",
     )
 
+    parser.add_argument(
+        "--clear",
+        action="store_true",
+        help="Limpa as pastas output/ e temp/",
+    )
+
+    parser.add_argument(
+        "--video",
+        type=str,
+        help="Processa um vídeo específico (URL do YouTube ou caminho local)",
+    )
+
     return parser
 
 
@@ -52,13 +64,18 @@ def main() -> None:
 
     try:
         # Para comandos simples, não mostra o cabeçalho completo
-        show_header = not (args.list_channels or args.test)
+        show_header = not (args.list_channels or args.test or args.clear)
         system = FastCutSystem(show_header=show_header)
 
-        if args.list_channels:
+        if args.clear:
+            system.clear_all_outputs()
+        elif args.list_channels:
             system.list_channels()
         elif args.test:
             system.test_system()
+        elif args.video:
+            stats = system.process_specific_video(args.video)
+            sys.exit(0 if stats.generated_clips > 0 else 1)
         else:
             stats = system.run_full_pipeline(
                 max_videos_per_channel=args.max_videos,

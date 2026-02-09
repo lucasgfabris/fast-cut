@@ -28,8 +28,8 @@ class VideoDownloader:
     def _setup_ydl_options(self) -> None:
         """Configura opções do yt-dlp."""
         self._ydl_opts = {
-            "format": "best[height<=720]/best",
-            "outtmpl": str(Config.TEMP_DIR / "%(title)s.%(ext)s"),
+            "format": "best[height<=1080]/best",
+            "outtmpl": str(Config.TEMP_DIR / "fastcut_original_%(id)s.%(ext)s"),
             "writeinfojson": True,
             "writesubtitles": False,
             "writeautomaticsub": False,
@@ -97,18 +97,20 @@ class VideoDownloader:
             return None
 
     def _find_downloaded_file(self, info: dict) -> Optional[Path]:
-        """Localiza o arquivo baixado."""
-        title = info.get("title", "video")
+        """Localiza o arquivo baixado usando o padrão fastcut_original_{video_id}."""
+        video_id = info.get("id", "")
         ext = info.get("ext", "mp4")
-
-        safe_title = "".join(c for c in title if c.isalnum() or c in (" ", "-", "_"))
-        safe_title = safe_title.strip()
-
-        for file in Config.TEMP_DIR.glob(f"*.{ext}"):
-            if safe_title[:20] in file.name:
-                print(f"✅ Vídeo baixado: {file.name}")
-                return file
-
+        
+        if not video_id:
+            return None
+        
+        # Procura pelo arquivo com o padrão fastcut_original_{video_id}
+        expected_file = Config.TEMP_DIR / f"fastcut_original_{video_id}.{ext}"
+        
+        if expected_file.exists():
+            print(f"✅ Vídeo baixado: {expected_file.name}")
+            return expected_file
+        
         return None
 
     def download_from_channels(self, max_per_channel: int = 5) -> List[Path]:

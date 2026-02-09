@@ -34,6 +34,9 @@ clean:  ## Limpa arquivos temporários
 	rm -rf dist/
 	rm -rf *.egg-info/
 
+clear:  ## Limpa as pastas output/ e temp/
+	python main.py --clear
+
 run:  ## Executa o sistema principal
 	python main.py
 

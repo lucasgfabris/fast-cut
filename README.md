@@ -11,6 +11,9 @@ Sistema inteligente que baixa vídeos de canais autorizados do YouTube e gera au
 - 🔒 **Seguro** - Apenas canais autorizados via variáveis de ambiente
 - ⚡ **Rápido** - Usa FFmpeg para processamento eficiente
 - 🧪 **Qualidade** - Sistema de linting e validação automática
+- 📊 **Progresso Visual** - Barra de progresso com porcentagem em tempo real
+- 🎬 **Alta Qualidade** - Cortes gerados em 1080p
+- 🧹 **Limpeza Automática** - Remove arquivos temporários após processamento
 
 ## 🚀 Instalação Rápida
 
@@ -152,11 +155,20 @@ python main.py --max-videos 3
 # Usar vídeos existentes
 python main.py --skip-download
 
+# Processar um vídeo específico (link do YouTube)
+python main.py --video "https://www.youtube.com/watch?v=VIDEO_ID"
+
+# Ou processar um arquivo local
+python main.py --video "caminho/do/video.mp4"
+
 # Listar canais
 python main.py --list-channels
 
 # Teste do sistema
 python main.py --test
+
+# Limpar pastas output/ e temp/
+python main.py --clear
 ```
 
 ### Com Make
@@ -164,6 +176,7 @@ python main.py --test
 make run                # Execução normal
 make run-test           # Teste
 make run-channels       # Lista canais
+make clear              # Limpa output/ e temp/
 ```
 
 ## 🎯 Limites de Duração

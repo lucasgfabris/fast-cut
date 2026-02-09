@@ -97,8 +97,11 @@ class FastCutSystem:
         print("\n🔍 ETAPA 2: ANÁLISE E GERAÇÃO DE CORTES")
         print("-" * 40)
 
+        total_videos = len(videos)
+        
         for i, video_path in enumerate(videos, 1):
-            print(f"\n📹 Processando {i}/{len(videos)}: {video_path.name}")
+            progress = (i / total_videos) * 100
+            print(f"\n📹 Processando {i}/{total_videos} ({progress:.1f}%): {video_path.name}")
 
             try:
                 # Analisa vídeo
@@ -111,8 +114,8 @@ class FastCutSystem:
 
                 stats.analyzed_videos += 1
 
-                # Gera cortes
-                results = self._cutter.process_clips(clips, video_path)
+                # Gera cortes com progresso
+                results = self._cutter.process_clips(clips, video_path, i, total_videos)
 
                 # Contabiliza resultados
                 video_clips_count = 0
@@ -136,6 +139,55 @@ class FastCutSystem:
 
         self._downloader.cleanup()
         self._cutter.cleanup()
+        self._cleanup_temp_videos()
+
+    def _cleanup_temp_videos(self) -> None:
+        """Remove vídeos baixados da pasta temp após processamento."""
+        try:
+            removed_count = 0
+            
+            # Remove vídeos originais baixados (fastcut_original_*)
+            for file in Config.TEMP_DIR.glob("fastcut_original_*"):
+                if file.is_file():
+                    file.unlink()
+                    removed_count += 1
+            
+            if removed_count > 0:
+                print(f"🗑️  {removed_count} vídeo(s) original(is) removido(s) de temp/")
+        except Exception as e:
+            print(f"⚠️  Erro ao limpar vídeos temporários: {e}")
+
+    def clear_all_outputs(self) -> None:
+        """Limpa todas as pastas de saída e temporários."""
+        import shutil
+        
+        print("🧹 LIMPANDO DIRETÓRIOS")
+        print("-" * 40)
+        
+        try:
+            # Limpa output/
+            if Config.OUTPUT_DIR.exists():
+                removed_count = 0
+                for platform_dir in Config.OUTPUT_DIR.iterdir():
+                    if platform_dir.is_dir():
+                        for file in platform_dir.iterdir():
+                            if file.is_file():
+                                file.unlink()
+                                removed_count += 1
+                print(f"✅ {removed_count} arquivo(s) removido(s) de output/")
+            
+            # Limpa temp/
+            if Config.TEMP_DIR.exists():
+                removed_count = 0
+                for file in Config.TEMP_DIR.iterdir():
+                    if file.is_file():
+                        file.unlink()
+                        removed_count += 1
+                print(f"✅ {removed_count} arquivo(s) removido(s) de temp/")
+            
+            print("✅ Limpeza concluída!")
+        except Exception as e:
+            print(f"❌ Erro durante limpeza: {e}")
 
     def _print_header(self) -> None:
         """Imprime cabeçalho do sistema."""
@@ -199,6 +251,111 @@ class FastCutSystem:
                 print("   ❌ Erro de acesso")
 
         print(f"\nTotal: {len(Config.AUTHORIZED_CHANNELS)} canais")
+
+    def process_specific_video(self, video_path_str: str) -> ProcessingStats:
+        """Processa um vídeo específico (arquivo local ou URL do YouTube)."""
+        stats = ProcessingStats()
+        stats.clips_by_platform = {platform: 0 for platform in Config.PLATFORM_SPECS}
+        
+        print("🎬 PROCESSAMENTO DE VÍDEO ESPECÍFICO")
+        print("=" * 60)
+        
+        # Verifica se é uma URL do YouTube
+        if video_path_str.startswith(("http://", "https://", "www.")):
+            print(f"🔗 Link detectado: {video_path_str}")
+            print("⬇️  Baixando vídeo...")
+            
+            try:
+                from .types import VideoMetadata
+                
+                # Cria metadata temporário para o vídeo
+                video_metadata = VideoMetadata(
+                    id="",
+                    title="Video específico",
+                    url=video_path_str,
+                    duration=None,
+                    upload_date=None,
+                    view_count=None,
+                    channel_id=""
+                )
+                
+                # Baixa o vídeo
+                video_path = self._downloader.download_video(video_metadata)
+                
+                if not video_path:
+                    print("❌ Falha ao baixar o vídeo")
+                    return stats
+                
+                print(f"✅ Vídeo baixado: {video_path.name}")
+                
+            except Exception as e:
+                print(f"❌ Erro ao baixar vídeo: {e}")
+                return stats
+        else:
+            # É um caminho de arquivo local
+            video_path = Path(video_path_str)
+            
+            if not video_path.exists():
+                print(f"❌ Vídeo não encontrado: {video_path}")
+                return stats
+            
+            if not video_path.is_file():
+                print(f"❌ Caminho não é um arquivo: {video_path}")
+                return stats
+        
+        try:
+            from datetime import datetime
+            start_time = datetime.now()
+            
+            print(f"📹 Processando: {video_path.name}")
+            print("-" * 60)
+            
+            # Analisa vídeo
+            print("🔍 Analisando vídeo...")
+            clips = self._analyzer.find_best_clips(video_path)
+            
+            if not clips:
+                print("⚠️  Nenhum clipe interessante encontrado")
+                return stats
+            
+            stats.analyzed_videos = 1
+            print(f"✅ {len(clips)} clipes encontrados")
+            
+            # Gera cortes
+            print("\n✂️  Gerando cortes...")
+            results = self._cutter.process_clips(clips, video_path, 1, 1)
+            
+            # Contabiliza resultados
+            video_clips_count = 0
+            for platform, platform_clips in results.items():
+                count = len(platform_clips)
+                stats.clips_by_platform[platform] += count
+                video_clips_count += count
+            
+            stats.generated_clips += video_clips_count
+            
+            # Relatório
+            duration = datetime.now() - start_time
+            print("\n" + "=" * 60)
+            print("📊 RESULTADO")
+            print("=" * 60)
+            print(f"⏱️  Tempo: {duration}")
+            print(f"✂️  Total de clipes: {video_clips_count}")
+            print()
+            print("📱 CLIPES POR PLATAFORMA:")
+            for platform, count in stats.clips_by_platform.items():
+                platform_name = platform.replace("_", " ").title()
+                print(f"  {platform_name}: {count} clipes")
+            print(f"\n🎯 Clipes salvos em: {Config.OUTPUT_DIR}")
+            print("=" * 60)
+            
+            return stats
+            
+        except Exception as e:
+            error_msg = f"Erro ao processar vídeo: {e}"
+            print(f"❌ {error_msg}")
+            stats.errors.append(error_msg)
+            return stats
 
     def test_system(self) -> None:
         """Testa o sistema com vídeo existente."""
