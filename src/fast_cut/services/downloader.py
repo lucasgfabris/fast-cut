@@ -33,7 +33,8 @@ class VideoDownloader:
     def _setup_ydl_options(self) -> None:
         """Configura opções do yt-dlp."""
         self._ydl_opts = {
-            "format": "best[height<=1080]/best",
+            "format": "bestvideo[height<=1080]+bestaudio/best",
+            "merge_output_format": "mp4",
             "outtmpl": str(self._config.temp_dir / "fastcut_original_%(id)s.%(ext)s"),
             "writeinfojson": True,
             "writesubtitles": False,
@@ -106,16 +107,17 @@ class VideoDownloader:
     def _find_downloaded_file(self, info: dict) -> Optional[Path]:
         """Localiza o arquivo baixado."""
         video_id = info.get("id", "")
-        ext = info.get("ext", "mp4")
 
         if not video_id:
             return None
 
-        expected_file = self._config.temp_dir / f"fastcut_original_{video_id}.{ext}"
-
-        if expected_file.exists():
-            logger.info("Vídeo baixado: %s", expected_file.name)
-            return expected_file
+        # Com merge_output_format, o arquivo final é sempre .mp4
+        # mas verificamos também a extensão original como fallback
+        for ext in ("mp4", info.get("ext", "mp4")):
+            expected = self._config.temp_dir / f"fastcut_original_{video_id}.{ext}"
+            if expected.exists():
+                logger.info("Vídeo baixado: %s", expected.name)
+                return expected
 
         return None
 

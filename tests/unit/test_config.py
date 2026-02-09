@@ -20,7 +20,7 @@ class TestConfigCreation:
         assert config.clips_per_video == 3
         assert config.energy_threshold == 0.7
         assert config.silence_threshold == -40
-        assert config.audio_bitrate == "128k"
+        assert config.audio_bitrate == "192k"
         assert len(config.platform_specs) == 3
 
     def test_custom_config(self) -> None:

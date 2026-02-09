@@ -58,82 +58,63 @@ class VideoCutter:
                 clip_progress,
             )
 
-            temp_clip = self._config.temp_dir / f"fastcut_temp_{video_id}_{i}.mp4"
-
             try:
-                self._cut_clip(source_video, clip, temp_clip)
-
                 for platform in self._config.platform_specs:
                     platform_dir = self._config.output_dir / platform
                     output_path = (
                         platform_dir / f"fastcut_cut_{video_id}_{i}_{platform}.mp4"
                     )
 
-                    if self._optimize_for_platform(temp_clip, platform, output_path):
+                    if self._cut_and_optimize(
+                        source_video, clip, platform, output_path
+                    ):
                         results[platform].append(str(output_path))
 
             except Exception as e:
                 logger.error("Erro no clipe %d: %s", i, e)
-            finally:
-                temp_clip.unlink(missing_ok=True)
 
         return results
 
-    def _cut_clip(self, video_path: Path, clip: Clip, output_path: Path) -> None:
-        """Corta um clipe do vídeo."""
-        args = [
-            "-i",
-            str(video_path),
-            "-ss",
-            str(clip.start_time),
-            "-t",
-            str(clip.duration),
-            "-c:v",
-            "libx264",
-            "-c:a",
-            "aac",
-            "-preset",
-            "fast",
-            "-crf",
-            "23",
-            "-y",
-            str(output_path),
-        ]
-
-        try:
-            self._ffmpeg.run_command(args)
-
-            if not output_path.exists():
-                raise CuttingError("Arquivo de saída não foi criado")
-
-        except FFmpegError as e:
-            raise CuttingError(f"Falha no corte: {e}")
-
-    def _optimize_for_platform(
-        self, input_path: Path, platform: str, output_path: Path
+    def _cut_and_optimize(
+        self,
+        source_video: Path,
+        clip: Clip,
+        platform: str,
+        output_path: Path,
     ) -> bool:
-        """Otimiza vídeo para uma plataforma específica."""
+        """Corta e otimiza um clipe em um único passo de encoding.
+
+        Combina seek, scale/crop e encode em um único comando FFmpeg,
+        evitando a perda de qualidade de uma dupla codificação.
+        """
         try:
             spec = self._config.platform_specs[platform]
-            width, height = spec.resolution
+            w, h = spec.resolution
+
+            # Scale para cobrir a resolução alvo, depois crop centralizado
+            vf = (
+                f"scale={w}:{h}"
+                f":force_original_aspect_ratio=increase,"
+                f"crop={w}:{h}:(iw-{w})/2:(ih-{h})/2"
+            )
 
             args = [
+                "-ss",
+                str(clip.start_time),
                 "-i",
-                str(input_path),
+                str(source_video),
+                "-t",
+                str(clip.duration),
                 "-vf",
-                (
-                    f"scale={width}:{height}"
-                    f":force_original_aspect_ratio=increase,"
-                    f"crop={width}:{height}"
-                ),
+                vf,
                 "-r",
                 str(spec.fps),
                 "-c:v",
                 "libx264",
                 "-preset",
-                "fast",
+                "medium",
                 "-crf",
-                "23",
+                "18",
                 "-c:a",
                 "aac",
                 "-b:a",
@@ -147,7 +128,11 @@ class VideoCutter:
             self._ffmpeg.run_command(args)
 
             if output_path.exists():
-                logger.info("Otimizado para %s: %s", platform, output_path.name)
+                logger.info(
+                    "Otimizado para %s: %s",
+                    platform,
+                    output_path.name,
+                )
                 return True
 
             return False

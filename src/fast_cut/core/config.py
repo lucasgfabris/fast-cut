@@ -52,7 +52,7 @@ class Config:
 
     # Configurações de qualidade
     video_quality: str = "1080p"
-    audio_bitrate: str = "128k"
+    audio_bitrate: str = "192k"
 
     # Configurações de análise
     energy_threshold: float = 0.7
@@ -88,7 +88,7 @@ class Config:
             max_clip_duration=int(os.getenv("MAX_CLIP_DURATION", "60")),
             clips_per_video=int(os.getenv("CLIPS_PER_VIDEO", "3")),
             video_quality=os.getenv("VIDEO_QUALITY", "1080p"),
-            audio_bitrate=os.getenv("AUDIO_BITRATE", "128k"),
+            audio_bitrate=os.getenv("AUDIO_BITRATE", "192k"),
             energy_threshold=float(os.getenv("ENERGY_THRESHOLD", "0.7")),
             silence_threshold=int(os.getenv("SILENCE_THRESHOLD", "-40")),
             platform_specs=platform_specs,
