@@ -6,7 +6,13 @@ import logging
 import sys
 
 from fast_cut.core.config import Config
-from fast_cut.core.system import create_system
+from fast_cut.utils.ffmpeg import FFmpegUtils
+
+# Configura PATH do FFmpeg ANTES de importar serviços que dependem de pydub,
+# evitando o warning "Couldn't find ffmpeg or avconv".
+FFmpegUtils().setup_environment()
+
+from fast_cut.core.system import create_system  # noqa: E402
 
 
 def setup_logging(verbose: bool = False) -> None:
