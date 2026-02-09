@@ -87,9 +87,7 @@ class TestConfigValidation:
         test_config.min_clip_duration = 60
         test_config.max_clip_duration = 30
 
-        with pytest.raises(
-            ValueError, match="MIN_CLIP_DURATION deve ser menor"
-        ):
+        with pytest.raises(ValueError, match="MIN_CLIP_DURATION deve ser menor"):
             test_config.validate()
 
     def test_equal_duration_raises(self, test_config: Config) -> None:
@@ -114,9 +112,7 @@ class TestConfigDirectories:
         for platform in test_config.platform_specs:
             assert (test_config.output_dir / platform).exists()
 
-    def test_create_directories_idempotent(
-        self, test_config: Config
-    ) -> None:
+    def test_create_directories_idempotent(self, test_config: Config) -> None:
         """Chamar create_directories múltiplas vezes não deve falhar."""
         test_config.create_directories()
         test_config.create_directories()  # Não deve levantar
@@ -149,9 +145,7 @@ class TestPlatformSpec:
         assert "custom_platform" in config.platform_specs
         assert config.platform_specs["custom_platform"].fps == 24
 
-    def test_load_platforms_from_json_file(
-        self, tmp_path: Path
-    ) -> None:
+    def test_load_platforms_from_json_file(self, tmp_path: Path) -> None:
         """Deve carregar plataformas de um arquivo JSON."""
         import json
 
@@ -171,9 +165,7 @@ class TestPlatformSpec:
         }
 
         json_path = tmp_path / "platforms.json"
-        json_path.write_text(
-            json.dumps(platforms_data), encoding="utf-8"
-        )
+        json_path.write_text(json.dumps(platforms_data), encoding="utf-8")
 
         specs = Config.load_platforms_from_file(json_path)
 
@@ -183,9 +175,7 @@ class TestPlatformSpec:
         assert specs["custom"].fps == 24
         assert specs["custom"].max_duration == 90
 
-    def test_load_platforms_invalid_file_falls_back(
-        self, tmp_path: Path
-    ) -> None:
+    def test_load_platforms_invalid_file_falls_back(self, tmp_path: Path) -> None:
         """Arquivo inválido deve retornar plataformas padrão."""
         bad_path = tmp_path / "naoexiste.json"
         specs = Config.load_platforms_from_file(bad_path)

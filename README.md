@@ -29,33 +29,33 @@ cp .env.example .env
 # Edite o .env com seus canais autorizados
 
 # Execute um teste
-make run-test
+npm run start:test
 ```
 
 ## Comandos de Desenvolvimento
 
 ```bash
 # Configuração inicial
-make install-dev        # Instala dependências de desenvolvimento
-make setup-hooks        # Configura pre-commit hooks
+npm run install:dev        # Instala dependências de desenvolvimento
+npm run setup:hooks        # Configura pre-commit hooks
 
 # Qualidade de código
-make format             # Formata código (black + isort)
-make lint               # Executa linting (flake8)
-make type-check         # Verifica tipos (mypy)
-make check              # Executa todas as verificações
+npm run format             # Formata código (black + isort)
+npm run lint               # Executa linting (flake8)
+npm run type-check         # Verifica tipos (mypy)
+npm run check              # Executa todas as verificações
 
 # Testes
-make test               # Executa testes unitários
+npm test                   # Executa testes unitários
 
 # Execução
-make run                # Executa o sistema
-make run-test           # Testa o sistema
-make run-channels       # Lista canais configurados
+npm start                  # Executa o sistema
+npm run start:test         # Testa o sistema
+npm run start:channels     # Lista canais configurados
 
 # Limpeza
-make clean              # Remove arquivos temporários
-make clear              # Limpa output/ e temp/
+npm run clean              # Remove arquivos temporários
+npm run clear              # Limpa output/ e temp/
 ```
 
 ## Configuração
@@ -133,7 +133,7 @@ fast-cut/
 │   ├── setup.py                # Configuração inicial do projeto
 │   └── validate.py             # Validação de qualidade do código
 ├── pyproject.toml
-└── Makefile
+└── package.json            # Task runner (npm run format, npm test, etc.)
 ```
 
 ### Diagrama de Dependências

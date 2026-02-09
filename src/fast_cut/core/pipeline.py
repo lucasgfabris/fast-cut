@@ -98,9 +98,7 @@ class PipelineOrchestrator:
             videos = self._file_manager.get_existing_videos()
             logger.info("Usando %d vídeos existentes", len(videos))
         else:
-            videos = self._downloader.download_from_channels(
-                max_videos_per_channel
-            )
+            videos = self._downloader.download_from_channels(max_videos_per_channel)
             logger.info("%d vídeos baixados", len(videos))
 
         return videos
@@ -140,9 +138,7 @@ class PipelineOrchestrator:
 
             analyzed = 1
 
-            results = self._cutter.process_clips(
-                clips, video_path, index, total
-            )
+            results = self._cutter.process_clips(clips, video_path, index, total)
 
             for platform, platform_clips in results.items():
                 count = len(platform_clips)
@@ -162,9 +158,7 @@ class PipelineOrchestrator:
 
         return analyzed, clips_count, clips_by_platform, errors
 
-    def _processing_phase(
-        self, videos: List[Path], stats: ProcessingStats
-    ) -> None:
+    def _processing_phase(self, videos: List[Path], stats: ProcessingStats) -> None:
         """Fase de processamento dos vídeos (paralelo via threads)."""
         logger.info("ETAPA 2: ANÁLISE E GERAÇÃO DE CORTES")
 
@@ -201,14 +195,11 @@ class PipelineOrchestrator:
 
                     for platform, count in clips_by_platform.items():
                         stats.clips_by_platform[platform] = (
-                            stats.clips_by_platform.get(platform, 0)
-                            + count
+                            stats.clips_by_platform.get(platform, 0) + count
                         )
 
                 except Exception as e:
-                    error_msg = (
-                        f"Erro inesperado em {video_path.name}: {e}"
-                    )
+                    error_msg = f"Erro inesperado em {video_path.name}: {e}"
                     logger.error(error_msg)
                     stats.errors.append(error_msg)
 

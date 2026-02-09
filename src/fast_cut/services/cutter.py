@@ -58,10 +58,7 @@ class VideoCutter:
                 clip_progress,
             )
 
-            temp_clip = (
-                self._config.temp_dir
-                / f"fastcut_temp_{video_id}_{i}.mp4"
-            )
+            temp_clip = self._config.temp_dir / f"fastcut_temp_{video_id}_{i}.mp4"
 
             try:
                 self._cut_clip(source_video, clip, temp_clip)
@@ -69,13 +66,10 @@ class VideoCutter:
                 for platform in self._config.platform_specs:
                     platform_dir = self._config.output_dir / platform
                     output_path = (
-                        platform_dir
-                        / f"fastcut_cut_{video_id}_{i}_{platform}.mp4"
+                        platform_dir / f"fastcut_cut_{video_id}_{i}_{platform}.mp4"
                     )
 
-                    if self._optimize_for_platform(
-                        temp_clip, platform, output_path
-                    ):
+                    if self._optimize_for_platform(temp_clip, platform, output_path):
                         results[platform].append(str(output_path))
 
             except Exception as e:
@@ -85,9 +79,7 @@ class VideoCutter:
 
         return results
 
-    def _cut_clip(
-        self, video_path: Path, clip: Clip, output_path: Path
-    ) -> None:
+    def _cut_clip(self, video_path: Path, clip: Clip, output_path: Path) -> None:
         """Corta um clipe do vídeo."""
         args = [
             "-i",
@@ -155,9 +147,7 @@ class VideoCutter:
             self._ffmpeg.run_command(args)
 
             if output_path.exists():
-                logger.info(
-                    "Otimizado para %s: %s", platform, output_path.name
-                )
+                logger.info("Otimizado para %s: %s", platform, output_path.name)
                 return True
 
             return False

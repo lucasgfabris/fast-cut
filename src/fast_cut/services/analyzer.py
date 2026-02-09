@@ -91,9 +91,7 @@ class VideoAnalyzer:
             return clips
 
         except Exception as e:
-            raise AnalysisError(
-                f"Falha na análise de {video_path.name}: {e}"
-            )
+            raise AnalysisError(f"Falha na análise de {video_path.name}: {e}")
 
     def _extract_audio(self, video_path: Path) -> Path:
         """Extrai áudio do vídeo."""
@@ -106,19 +104,13 @@ class VideoAnalyzer:
         except Exception as e:
             raise AnalysisError(f"Falha na extração de áudio: {e}")
 
-    def _analyze_audio_energy(
-        self, audio_path: Path
-    ) -> List[TimelinePoint]:
+    def _analyze_audio_energy(self, audio_path: Path) -> List[TimelinePoint]:
         """Analisa energia do áudio."""
         try:
             y, sr = librosa.load(str(audio_path))
 
-            rms = librosa.feature.rms(
-                y=y, frame_length=2048, hop_length=512
-            )[0]
-            times = librosa.frames_to_time(
-                np.arange(len(rms)), sr=sr, hop_length=512
-            )
+            rms = librosa.feature.rms(y=y, frame_length=2048, hop_length=512)[0]
+            times = librosa.frames_to_time(np.arange(len(rms)), sr=sr, hop_length=512)
 
             # Normaliza
             rms_norm = (rms - np.min(rms)) / (np.max(rms) - np.min(rms))
@@ -140,10 +132,7 @@ class VideoAnalyzer:
                 silence_thresh=self._config.silence_threshold,
             )
 
-            return [
-                (start / 1000, end / 1000)
-                for start, end in nonsilent_ranges
-            ]
+            return [(start / 1000, end / 1000) for start, end in nonsilent_ranges]
 
         except Exception as e:
             logger.warning("Erro na detecção de fala: %s", e)
@@ -175,13 +164,11 @@ class VideoAnalyzer:
 
                     if prev_frame is not None:
                         frame_diff = cv2.absdiff(prev_frame, gray)
-                        thresh = cv2.threshold(
-                            frame_diff, 25, 255, cv2.THRESH_BINARY
-                        )[1]
+                        thresh = cv2.threshold(frame_diff, 25, 255, cv2.THRESH_BINARY)[
+                            1
+                        ]
 
-                        activity = np.sum(thresh) / (
-                            thresh.shape[0] * thresh.shape[1]
-                        )
+                        activity = np.sum(thresh) / (thresh.shape[0] * thresh.shape[1])
                         timestamp = frame_count / fps
 
                         activity_timeline.append((timestamp, activity))
@@ -226,9 +213,7 @@ class VideoAnalyzer:
         # Pontuação por atividade visual
         for timestamp, activity in visual_activity:
             if activity > 0.3:
-                scores[timestamp] = (
-                    scores.get(timestamp, 0) + activity * 0.3
-                )
+                scores[timestamp] = scores.get(timestamp, 0) + activity * 0.3
 
         # Bonificação para fala
         for start, end in speech_segments:
@@ -247,23 +232,17 @@ class VideoAnalyzer:
         clips: List[Clip] = []
         used_intervals: list[tuple[float, float]] = []
 
-        for timestamp, score in best_moments[
-            : self._config.clips_per_video * 3
-        ]:
+        for timestamp, score in best_moments[: self._config.clips_per_video * 3]:
             clip_duration = random.randint(
                 self._config.min_clip_duration,
                 self._config.max_clip_duration,
             )
 
             clip_start = max(0, timestamp - clip_duration // 2)
-            clip_end = min(
-                video_info.duration, clip_start + clip_duration
-            )
+            clip_end = min(video_info.duration, clip_start + clip_duration)
 
             if clip_end - clip_start < self._config.min_clip_duration:
-                clip_start = max(
-                    0, clip_end - self._config.min_clip_duration
-                )
+                clip_start = max(0, clip_end - self._config.min_clip_duration)
 
             # Verifica sobreposição
             overlaps = any(
@@ -271,10 +250,7 @@ class VideoAnalyzer:
                 for used_start, used_end in used_intervals
             )
 
-            if (
-                not overlaps
-                and len(clips) < self._config.clips_per_video
-            ):
+            if not overlaps and len(clips) < self._config.clips_per_video:
                 clip = Clip(
                     start_time=clip_start,
                     end_time=clip_end,

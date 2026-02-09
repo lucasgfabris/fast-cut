@@ -11,7 +11,6 @@ from fast_cut.core.file_manager import FileManager
 from fast_cut.core.pipeline import PipelineOrchestrator
 from fast_cut.core.types import Clip, ProcessingResults, VideoMetadata
 
-
 # -- Fakes para testes --------------------------------------------------------
 
 
@@ -22,14 +21,10 @@ class FakeDownloader:
         self._videos = videos_to_return or []
         self.cleanup_called = False
 
-    def download_from_channels(
-        self, max_per_channel: int = 5
-    ) -> List[Path]:
+    def download_from_channels(self, max_per_channel: int = 5) -> List[Path]:
         return self._videos
 
-    def download_video(
-        self, video: VideoMetadata
-    ) -> Optional[Path]:
+    def download_video(self, video: VideoMetadata) -> Optional[Path]:
         return self._videos[0] if self._videos else None
 
     def get_channel_videos(
@@ -54,9 +49,7 @@ class FakeAnalyzer:
 class FakeCutter:
     """Implementação fake do Cutter."""
 
-    def __init__(
-        self, results: ProcessingResults | None = None
-    ) -> None:
+    def __init__(self, results: ProcessingResults | None = None) -> None:
         self._results = results or {}
         self.cleanup_called = False
 
@@ -79,9 +72,7 @@ class FakeCutter:
 class TestPipelineNoVideos:
     """Testes quando não há vídeos disponíveis."""
 
-    def test_run_no_videos_returns_empty_stats(
-        self, test_config: Config
-    ) -> None:
+    def test_run_no_videos_returns_empty_stats(self, test_config: Config) -> None:
         """Pipeline sem vídeos retorna stats vazias."""
         pipeline = PipelineOrchestrator(
             config=test_config,
@@ -99,9 +90,7 @@ class TestPipelineNoVideos:
 class TestPipelineWithVideos:
     """Testes do pipeline com vídeos disponíveis."""
 
-    def test_run_processes_videos(
-        self, test_config: Config
-    ) -> None:
+    def test_run_processes_videos(self, test_config: Config) -> None:
         """Pipeline deve processar vídeos e gerar clips."""
         video = test_config.temp_dir / "video.mp4"
         video.touch()
@@ -169,9 +158,7 @@ class TestPipelineWithVideos:
 class TestPipelineSingleVideo:
     """Testes de processamento de vídeo único."""
 
-    def test_process_single_video(
-        self, test_config: Config
-    ) -> None:
+    def test_process_single_video(self, test_config: Config) -> None:
         """Deve processar um vídeo e retornar stats."""
         video = test_config.temp_dir / "single.mp4"
         video.touch()
@@ -203,9 +190,7 @@ class TestPipelineSingleVideo:
         assert stats.analyzed_videos == 1
         assert stats.generated_clips == 1
 
-    def test_process_no_clips_found(
-        self, test_config: Config
-    ) -> None:
+    def test_process_no_clips_found(self, test_config: Config) -> None:
         """Quando nenhum clip é encontrado, stats deve refletir."""
         video = test_config.temp_dir / "boring.mp4"
         video.touch()

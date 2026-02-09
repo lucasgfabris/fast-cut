@@ -57,9 +57,7 @@ class FileManager:
                             if file.is_file():
                                 file.unlink()
                                 removed_count += 1
-                logger.info(
-                    "%d arquivo(s) removido(s) de output/", removed_count
-                )
+                logger.info("%d arquivo(s) removido(s) de output/", removed_count)
 
             # Limpa temp/
             if self._config.temp_dir.exists():
@@ -68,9 +66,7 @@ class FileManager:
                     if file.is_file():
                         file.unlink()
                         removed_count += 1
-                logger.info(
-                    "%d arquivo(s) removido(s) de temp/", removed_count
-                )
+                logger.info("%d arquivo(s) removido(s) de temp/", removed_count)
 
             logger.info("Limpeza concluída!")
         except Exception as e:

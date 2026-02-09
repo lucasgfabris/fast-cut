@@ -34,9 +34,7 @@ class VideoDownloader:
         """Configura opções do yt-dlp."""
         self._ydl_opts = {
             "format": "best[height<=1080]/best",
-            "outtmpl": str(
-                self._config.temp_dir / "fastcut_original_%(id)s.%(ext)s"
-            ),
+            "outtmpl": str(self._config.temp_dir / "fastcut_original_%(id)s.%(ext)s"),
             "writeinfojson": True,
             "writesubtitles": False,
             "writeautomaticsub": False,
@@ -61,9 +59,7 @@ class VideoDownloader:
         try:
             with yt_dlp.YoutubeDL(list_opts) as ydl:
                 logger.info("Buscando vídeos do canal: %s", channel_id)
-                playlist_info = ydl.extract_info(
-                    channel_url, download=False
-                )
+                playlist_info = ydl.extract_info(channel_url, download=False)
 
                 if not playlist_info or "entries" not in playlist_info:
                     return []
@@ -83,9 +79,7 @@ class VideoDownloader:
                 ]
 
         except Exception as e:
-            logger.error(
-                "Erro ao buscar vídeos do canal %s: %s", channel_id, e
-            )
+            logger.error("Erro ao buscar vídeos do canal %s: %s", channel_id, e)
             return []
 
     def download_video(self, video: VideoMetadata) -> Optional[Path]:
@@ -97,9 +91,7 @@ class VideoDownloader:
                 info = ydl.extract_info(video.url, download=False)
 
                 if info.get("duration", 0) < self.MIN_VIDEO_DURATION:
-                    logger.info(
-                        "Vídeo muito curto (%ds)", info.get("duration")
-                    )
+                    logger.info("Vídeo muito curto (%ds)", info.get("duration"))
                     return None
 
                 ydl.download([video.url])
@@ -117,9 +109,7 @@ class VideoDownloader:
         if not video_id:
             return None
 
-        expected_file = (
-            self._config.temp_dir / f"fastcut_original_{video_id}.{ext}"
-        )
+        expected_file = self._config.temp_dir / f"fastcut_original_{video_id}.{ext}"
 
         if expected_file.exists():
             logger.info("Vídeo baixado: %s", expected_file.name)
@@ -127,9 +117,7 @@ class VideoDownloader:
 
         return None
 
-    def download_from_channels(
-        self, max_per_channel: int = 5
-    ) -> List[Path]:
+    def download_from_channels(self, max_per_channel: int = 5) -> List[Path]:
         """Baixa vídeos de todos os canais autorizados (paralelo por canal)."""
         # Coleta todos os vídeos de todos os canais
         all_videos: List[VideoMetadata] = []
@@ -159,9 +147,7 @@ class VideoDownloader:
                     if path:
                         downloaded.append(path)
                 except Exception as e:
-                    logger.error(
-                        "Erro no download de %s: %s", video.title, e
-                    )
+                    logger.error("Erro no download de %s: %s", video.title, e)
 
         logger.info("Download concluído: %d vídeos", len(downloaded))
         return downloaded

@@ -108,27 +108,19 @@ class FastCutSystem:
             logger.info("Configure AUTHORIZED_CHANNELS no arquivo .env")
             return
 
-        for i, channel_id in enumerate(
-            self._config.authorized_channels, 1
-        ):
+        for i, channel_id in enumerate(self._config.authorized_channels, 1):
             logger.info("%d. %s", i, channel_id)
 
             try:
-                videos = self._downloader.get_channel_videos(
-                    channel_id, 1
-                )
+                videos = self._downloader.get_channel_videos(channel_id, 1)
                 if videos:
-                    logger.info(
-                        "   Ativo - último: %s...", videos[0].title[:50]
-                    )
+                    logger.info("   Ativo - último: %s...", videos[0].title[:50])
                 else:
                     logger.warning("   Sem vídeos recentes")
             except Exception:
                 logger.error("   Erro de acesso")
 
-        logger.info(
-            "Total: %d canais", len(self._config.authorized_channels)
-        )
+        logger.info("Total: %d canais", len(self._config.authorized_channels))
 
     def test_system(self) -> None:
         """Testa o sistema com vídeo existente."""
@@ -138,9 +130,7 @@ class FastCutSystem:
 
         if not videos:
             logger.error("Nenhum vídeo para teste")
-            logger.info(
-                "Coloque um vídeo em: %s", self._config.temp_dir
-            )
+            logger.info("Coloque um vídeo em: %s", self._config.temp_dir)
             return
 
         test_video = videos[0]
@@ -171,9 +161,7 @@ class FastCutSystem:
                     channel_id="",
                 )
 
-                video_path = self._downloader.download_video(
-                    video_metadata
-                )
+                video_path = self._downloader.download_video(video_metadata)
 
                 if not video_path:
                     logger.error("Falha ao baixar o vídeo")
@@ -193,9 +181,7 @@ class FastCutSystem:
                 return None
 
             if not video_path.is_file():
-                logger.error(
-                    "Caminho não é um arquivo: %s", video_path
-                )
+                logger.error("Caminho não é um arquivo: %s", video_path)
                 return None
 
             return video_path

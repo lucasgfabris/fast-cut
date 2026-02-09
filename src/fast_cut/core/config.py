@@ -71,16 +71,12 @@ class Config:
         load_dotenv(env_path)
 
         channels_raw = os.getenv("AUTHORIZED_CHANNELS", "")
-        channels = [
-            ch.strip() for ch in channels_raw.split(",") if ch.strip()
-        ]
+        channels = [ch.strip() for ch in channels_raw.split(",") if ch.strip()]
 
         # Carrega plataformas de JSON externo se configurado
         platforms_file = os.getenv("PLATFORMS_FILE", "")
         if platforms_file:
-            platform_specs = cls.load_platforms_from_file(
-                Path(platforms_file)
-            )
+            platform_specs = cls.load_platforms_from_file(Path(platforms_file))
         else:
             platform_specs = dict(DEFAULT_PLATFORM_SPECS)
 
@@ -159,9 +155,7 @@ class Config:
             )
 
         if self.min_clip_duration >= self.max_clip_duration:
-            raise ValueError(
-                "MIN_CLIP_DURATION deve ser menor que MAX_CLIP_DURATION"
-            )
+            raise ValueError("MIN_CLIP_DURATION deve ser menor que MAX_CLIP_DURATION")
 
         logger.info(
             "Configuração validada: %d canais, duração %ds-%ds, %d clipes/vídeo",

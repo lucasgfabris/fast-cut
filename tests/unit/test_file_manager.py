@@ -32,9 +32,7 @@ class TestGetExistingVideos:
         assert "video2.mkv" in names
         assert "nota.txt" not in names
 
-    def test_nonexistent_temp_dir(
-        self, tmp_path: Path
-    ) -> None:
+    def test_nonexistent_temp_dir(self, tmp_path: Path) -> None:
         """Retorna vazio se o diretório temp não existe."""
         config = Config(temp_dir=tmp_path / "naoexiste")
         fm = FileManager(config)
@@ -44,9 +42,7 @@ class TestGetExistingVideos:
 class TestCleanupTempVideos:
     """Testes para limpeza de vídeos temporários."""
 
-    def test_removes_fastcut_originals(
-        self, test_config: Config
-    ) -> None:
+    def test_removes_fastcut_originals(self, test_config: Config) -> None:
         """Deve remover apenas arquivos fastcut_original_*."""
         (test_config.temp_dir / "fastcut_original_abc.mp4").touch()
         (test_config.temp_dir / "fastcut_original_def.mkv").touch()
@@ -68,17 +64,13 @@ class TestCleanupTempVideos:
 class TestClearAllOutputs:
     """Testes para limpeza completa."""
 
-    def test_clears_output_and_temp(
-        self, test_config: Config
-    ) -> None:
+    def test_clears_output_and_temp(self, test_config: Config) -> None:
         """Deve limpar arquivos em output/ e temp/."""
         test_config.create_directories()
 
         # Cria arquivos fake
         for platform in test_config.platform_specs:
-            (
-                test_config.output_dir / platform / "clip.mp4"
-            ).touch()
+            (test_config.output_dir / platform / "clip.mp4").touch()
         (test_config.temp_dir / "temp_file.mp4").touch()
 
         fm = FileManager(test_config)
@@ -86,9 +78,7 @@ class TestClearAllOutputs:
 
         # Verifica que output está vazio
         for platform in test_config.platform_specs:
-            files = list(
-                (test_config.output_dir / platform).iterdir()
-            )
+            files = list((test_config.output_dir / platform).iterdir())
             assert len(files) == 0
 
         # Verifica que temp está vazio

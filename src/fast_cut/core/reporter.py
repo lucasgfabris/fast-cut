@@ -24,13 +24,9 @@ class Reporter:
         logger.info("=" * 60)
         logger.info("SISTEMA FAST CUT - GERADOR AUTOMÁTICO DE CORTES")
         logger.info("=" * 60)
-        logger.info(
-            "Iniciado em: %s", datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-        )
+        logger.info("Iniciado em: %s", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
 
-    def print_final_report(
-        self, stats: ProcessingStats, duration: timedelta
-    ) -> None:
+    def print_final_report(self, stats: ProcessingStats, duration: timedelta) -> None:
         """Imprime relatório final."""
         logger.info("=" * 60)
         logger.info("RELATÓRIO FINAL")
@@ -51,14 +47,10 @@ class Reporter:
             for error in stats.errors[:5]:
                 logger.warning("  - %s", error)
             if len(stats.errors) > 5:
-                logger.warning(
-                    "  ... e mais %d erros", len(stats.errors) - 5
-                )
+                logger.warning("  ... e mais %d erros", len(stats.errors) - 5)
 
         if stats.analyzed_videos > 0 and stats.downloaded_videos > 0:
-            success_rate = (
-                stats.analyzed_videos / stats.downloaded_videos
-            ) * 100
+            success_rate = (stats.analyzed_videos / stats.downloaded_videos) * 100
             logger.info("Taxa de sucesso: %.1f%%", success_rate)
 
         logger.info("Clipes salvos em: %s", self._config.output_dir)

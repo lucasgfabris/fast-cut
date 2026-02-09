@@ -1,0 +1,21 @@
+{
+  "name": "fast-cut",
+  "version": "1.0.0",
+  "description": "Sistema de Geração Automática de Cortes para Redes Sociais",
+  "private": true,
+  "scripts": {
+    "install": "pip install -e .",
+    "install:dev": "pip install -e \".[dev]\"",
+    "setup:hooks": "pre-commit install",
+    "format": "python -m black . && python -m isort .",
+    "lint": "python -m flake8 .",
+    "type-check": "python -m mypy .",
+    "check": "npm run format && npm run lint && npm run type-check",
+    "test": "python -m pytest tests/ -v",
+    "clean": "python -c \"import shutil, glob, os; [os.remove(f) for f in glob.glob('**/*.pyc', recursive=True)]; [shutil.rmtree(d) for d in glob.glob('**/__pycache__', recursive=True) if os.path.isdir(d)]; [shutil.rmtree(d, True) for d in ['build', 'dist'] if os.path.isdir(d)]; [shutil.rmtree(d, True) for d in glob.glob('*.egg-info')]\"",
+    "clear": "python main.py --clear",
+    "start": "python main.py",
+    "start:test": "python main.py --test",
+    "start:channels": "python main.py --list-channels"
+  }
+}
