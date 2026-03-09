@@ -3,7 +3,7 @@ requires = ["setuptools>=45", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "fast-cut"
+name = "python-video-cuts"
 version = "1.0.0"
 description = "Sistema de Geração Automática de Cortes para Redes Sociais"
 authors = [{name = "Fast Cut System"}]
@@ -20,7 +20,7 @@ dependencies = [
 ]
 
 [project.scripts]
-fast-cut = "main:main"
+python-video-cuts = "main:main"
 validate = "scripts.validate:main"
 setup-project = "scripts.setup:main"
 

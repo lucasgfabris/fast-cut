@@ -1,11 +1,11 @@
-# Fast Cut
+# Python Video Cuts
 
-![GitHub repo size](https://img.shields.io/github/repo-size/lucasgfabris/fast-cut?style=for-the-badge)
-![GitHub language count](https://img.shields.io/github/languages/count/lucasgfabris/fast-cut?style=for-the-badge)
+![GitHub repo size](https://img.shields.io/github/repo-size/lucasgfabris/python-video-cuts?style=for-the-badge)
+![GitHub language count](https://img.shields.io/github/languages/count/lucasgfabris/python-video-cuts?style=for-the-badge)
 
 > Sistema inteligente que baixa videos de canais autorizados do YouTube e gera automaticamente cortes otimizados para YouTube Shorts, TikTok e Instagram Reels. Analisa audio e video para identificar os melhores momentos.
 
-<img src="imagem.png" alt="Fast Cut">
+<img src="imagem.png" alt="Python Video Cuts">
 
 ### Ajustes e melhorias
 
@@ -28,11 +28,11 @@ Antes de comecar, verifique se voce atendeu aos seguintes requisitos:
 
 ## Instalando
 
-Para instalar o Fast Cut, siga estas etapas:
+Para instalar o Python Video Cuts, siga estas etapas:
 
 ```bash
-git clone https://github.com/lucasgfabris/fast-cut.git
-cd fast-cut
+git clone https://github.com/lucasgfabris/python-video-cuts.git
+cd python-video-cuts
 python scripts/setup.py
 cp .env.example .env
 ```
@@ -48,7 +48,7 @@ CLIPS_PER_VIDEO=3
 
 ## Usando
 
-Para usar o Fast Cut, siga estas etapas:
+Para usar o Python Video Cuts, siga estas etapas:
 
 ```bash
 # Sistema completo
@@ -94,7 +94,7 @@ Crie um arquivo `platforms.json` para adicionar novas plataformas:
 
 | Categoria | Tecnologias |
 |-----------|-------------|
-| Linguagem | Python 3.9+ |
+| Linguagem | Python 3.11+ |
 | Download | yt-dlp |
 | Processamento | FFmpeg, OpenCV, MoviePy |
 | Analise de audio | librosa |
@@ -104,7 +104,7 @@ Crie um arquivo `platforms.json` para adicionar novas plataformas:
 ## Estrutura do Projeto
 
 ```
-fast-cut/
+python-video-cuts/
 ├── main.py                     # Entry point (CLI)
 ├── src/fast_cut/
 │   ├── core/                   # Nucleo do sistema
@@ -123,7 +123,7 @@ fast-cut/
 
 ## Contribuindo
 
-Para contribuir com Fast Cut, siga estas etapas:
+Para contribuir com Python Video Cuts, siga estas etapas:
 
 1. Bifurque este repositorio.
 2. Crie um branch: `git checkout -b <nome_branch>`.
