@@ -22,7 +22,7 @@ O projeto ainda esta em desenvolvimento e as proximas atualizacoes serao voltada
 
 Antes de comecar, verifique se voce atendeu aos seguintes requisitos:
 
-- Python 3.9 ou superior
+- Python 3.11 ou superior
 - FFmpeg instalado no sistema (ou use `scripts/install_ffmpeg.py` no Windows)
 - Node.js/npm (opcional, para scripts do package.json)
 
